@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { FileText, MoreVertical, Combine, ListOrdered, Trash2, Edit3 } from 'lucide-react';
-import { useState } from 'react';
+import { FileText, MoreVertical, Combine, ListOrdered, Trash2, Edit3, Minimize } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export interface FileData {
   path: string;
@@ -12,12 +12,26 @@ export interface FileData {
 interface FileListViewProps {
   files: FileData[];
   searchQuery: string;
-  onSelectAction: (action: 'merge' | 'reorder' | 'delete' | 'edit', filePaths: string[]) => void;
+  onSelectAction: (action: 'merge' | 'reorder' | 'delete' | 'edit' | 'compress', filePaths: string[]) => void;
   title: string;
 }
 
 export function FileListView({ files, searchQuery, onSelectAction, title }: FileListViewProps) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.action-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    if (menuOpenId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpenId]);
 
   const filteredFiles = files.filter(f => 
     f.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -85,7 +99,7 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                   <td className="p-4 text-secondary hidden lg:table-cell whitespace-nowrap">
                     {formatSize(file.size)}
                   </td>
-                  <td className="p-4 text-right relative">
+                  <td className="p-4 text-right relative action-menu-container">
                     <button 
                       className="p-2 text-secondary hover:text-on-surface rounded-full hover:bg-surface-container transition-colors focus:outline-none"
                       onClick={() => setMenuOpenId(menuOpenId === file.path ? null : file.path)}
@@ -118,6 +132,12 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                           onClick={() => { setMenuOpenId(null); onSelectAction('edit', [file.path]); }}
                         >
                           <Edit3 size={16} className="text-secondary" /> Edit
+                        </button>
+                        <button 
+                          className="w-full px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-2"
+                          onClick={() => { setMenuOpenId(null); onSelectAction('compress', [file.path]); }}
+                        >
+                          <Minimize size={16} className="text-secondary" /> Compress
                         </button>
                       </div>
                     )}
