@@ -13,7 +13,7 @@
 
 <br />
 
-<img src="https://via.placeholder.com/800x450.png?text=App+Screenshot+Here" alt="App Screenshot Placeholder" width="800"/>
+<img src="src/assets/App_Screenshot.png" alt="App Screenshot Placeholder" width="800"/>
 
 <br />
 </div>
