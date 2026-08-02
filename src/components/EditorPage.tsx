@@ -9,10 +9,8 @@ interface EditorPageProps {
   activeTool: 'select' | 'select-text' | 'draw' | 'highlight' | 'text' | 'eraser';
   textColor: string;
   fontFamily: string;
-  isBold: boolean;
-  isItalic: boolean;
   isUnderline: boolean;
-  rotation: number;
+  globalRotation: number;
   onAnnotationAdded?: () => void;
 }
 
@@ -32,7 +30,7 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
   isBold,
   isItalic,
   isUnderline,
-  rotation,
+  globalRotation,
   onAnnotationAdded
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,8 +39,10 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
   const [textItems, setTextItems] = useState<any[]>([]);
   const [viewportState, setViewportState] = useState<any>(null);
+  const [pageRotation, setPageRotation] = useState(0);
   
   const [originalDims, setOriginalDims] = useState({ width: 0, height: 0 });
+  const totalRotation = (page.rotate + globalRotation + pageRotation) % 360;
 
   useImperativeHandle(ref, () => ({
     getAnnotations: () => {
@@ -50,7 +50,8 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
       return fabricCanvas.getObjects().map(obj => obj.toObject(['id', 'customType']));
     },
     pageIndex,
-    getOriginalDimensions: () => originalDims
+    getOriginalDimensions: () => originalDims,
+    getRotation: () => pageRotation
   }));
 
   // Render PDF and Initialize Fabric
@@ -61,11 +62,11 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
     const renderPage = async () => {
       if (!pdfCanvasRef.current || !fabricCanvasRef.current) return;
       
-      const viewport = page.getViewport({ scale, rotation: (page.rotate + rotation) % 360 });
+      const viewport = page.getViewport({ scale, rotation: totalRotation });
       setViewportState(viewport);
       setOriginalDims({ 
-        width: page.getViewport({ scale: 1, rotation: (page.rotate + rotation) % 360 }).width, 
-        height: page.getViewport({ scale: 1, rotation: (page.rotate + rotation) % 360 }).height 
+        width: page.getViewport({ scale: 1, rotation: totalRotation }).width, 
+        height: page.getViewport({ scale: 1, rotation: totalRotation }).height 
       });
 
       // Fetch Text Content
@@ -114,11 +115,17 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
         fCanvas.dispose();
       }
     };
-  }, [page, scale, rotation]);
+  }, [page, scale, totalRotation]);
 
   // Tool handling
   useEffect(() => {
     if (!fabricCanvas) return;
+
+    // Toggle pointer events on the Fabric wrapper
+    const wrapper = fabricCanvas.wrapperEl;
+    if (wrapper) {
+      wrapper.style.pointerEvents = activeTool === 'select-text' ? 'none' : 'auto';
+    }
 
     // Reset modes
     fabricCanvas.isDrawingMode = false;
@@ -192,18 +199,27 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
   }, [textColor, fontFamily, isBold, isItalic, isUnderline, activeTool]);
 
   return (
-    <div ref={containerRef} className="relative shadow-md mx-auto mb-8 bg-white" style={{ width: originalDims.width * scale, height: originalDims.height * scale }}>
+    <div ref={containerRef} className="relative shadow-md mx-auto mb-8 bg-white group" style={{ width: originalDims.width * scale, height: originalDims.height * scale }}>
+      {/* Page Controls Overlay */}
+      <div className="absolute top-2 right-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+         <button 
+           onClick={() => setPageRotation(r => (r + 90) % 360)}
+           className="bg-surface shadow-sm border border-outline-variant rounded p-1.5 hover:bg-surface-container-highest text-secondary"
+           title="Rotate this page only"
+         >
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+         </button>
+      </div>
       <canvas ref={pdfCanvasRef} className="absolute top-0 left-0 z-0" style={{ width: '100%', height: '100%' }} />
       
       {/* Selectable Text Layer */}
       {viewportState && (
         <div 
-          className="absolute top-0 left-0 w-full h-full z-10 overflow-hidden" 
+          className="absolute top-0 left-0 w-full h-full z-10 overflow-hidden text-layer" 
           style={{ pointerEvents: activeTool === 'select-text' ? 'auto' : 'none' }}
         >
           {textItems.map((item, i) => {
             const [x, y] = viewportState.convertToViewportPoint(item.transform[4], item.transform[5]);
-            // y is the baseline of the text. To get top-left, we subtract the font size.
             const fontSize = item.transform[3] * scale;
             const width = item.width * scale;
             
@@ -222,6 +238,7 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
                   whiteSpace: 'pre',
                   cursor: 'text'
                 }}
+                className="selection:bg-primary-container selection:text-transparent"
               >
                 {item.str}
               </span>
@@ -230,7 +247,10 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
         </div>
       )}
       
-      <canvas ref={fabricCanvasRef} className="absolute top-0 left-0 z-20" style={{ pointerEvents: activeTool === 'select-text' ? 'none' : 'auto' }} />
+      {/* We apply a generic class here to wrap, but pointer events are managed via fabricCanvas.wrapperEl in useEffect */}
+      <div className="absolute top-0 left-0 z-20 w-full h-full">
+         <canvas ref={fabricCanvasRef} />
+      </div>
     </div>
   );
 });

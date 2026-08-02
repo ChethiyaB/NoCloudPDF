@@ -117,9 +117,12 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         const originalDims = pageRef.getOriginalDimensions();
         const targetPdfPage = pdfPages[i];
         
-        if (rotation !== 0) {
+        const pageRotation = pageRef.getRotation();
+        const totalRotation = (rotation + pageRotation) % 360;
+        
+        if (totalRotation !== 0) {
           const currentRotation = targetPdfPage.getRotation().angle;
-          targetPdfPage.setRotation(degrees((currentRotation + rotation) % 360));
+          targetPdfPage.setRotation(degrees((currentRotation + totalRotation) % 360));
         }
 
         const pageHeight = targetPdfPage.getHeight();
@@ -130,18 +133,18 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         const scaleY = pageHeight / originalDims.height;
 
         for (const ann of annotations) {
-          // If the page was rotated visually by us (rotation !== 0), we must transform the coordinates
+          // If the page was rotated visually by us, we must transform the coordinates
           // to map back to the original unrotated pdf-lib page space.
           let x = ann.left;
           let y = ann.top;
           
-          if (rotation === 90) {
+          if (totalRotation === 90) {
             x = ann.top;
-            y = originalDims.height - ann.left; // Wait, visual width is originalDims.height
-          } else if (rotation === 180) {
+            y = originalDims.height - ann.left; 
+          } else if (totalRotation === 180) {
             x = originalDims.width - ann.left;
             y = originalDims.height - ann.top;
-          } else if (rotation === 270) {
+          } else if (totalRotation === 270) {
             x = originalDims.width - ann.top;
             y = ann.left;
           }
@@ -422,7 +425,7 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
                 isBold={isBold}
                 isItalic={isItalic}
                 isUnderline={isUnderline}
-                rotation={rotation}
+                globalRotation={rotation}
               />
             ))}
           </div>
