@@ -4,6 +4,7 @@ import { Search, Upload, Combine, ListOrdered, Trash2, Edit3, Minimize, Settings
 import { MergeView } from './components/MergeView';
 import { ReorderDeleteView } from './components/ReorderDeleteView';
 import { ToolboxView } from './components/ToolboxView';
+import logoUrl from './assets/logo.png';
 import './App.css';
 
 type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit';
@@ -52,7 +53,7 @@ function App() {
       {/* TopHeader */}
       <header className="bg-surface border-b border-surface-variant h-16 flex items-center px-4 justify-between shrink-0 z-10 sticky top-0">
         <div className="flex items-center gap-6 w-64">
-          <img alt="NoCloudPDF Logo" className="h-10 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGKJEUnzpfcGw4k6eWFp_6FSy3QVuEAw21JvNidduk4cQj5OeHBb_00IFPamA5_zggaBr55nJVrCiYLGPi9-HdU3NeoA9S3BOsONVYf43qpnsdFG6BP3rqcxZob0MH2yqLFSAHiyo5OIqr7FJXeOTMGPuYA5BmVWkTor0jO-yc3pPe-m51dxwzn3kN4abe3j0BAvj3t7caAnrR29vWPm3MKyEnQKWtNccfZQXHy6nRrPwGa0CEldr_" />
+          <img alt="NoCloudPDF Logo" className="h-10 w-auto object-contain" src={logoUrl} />
         </div>
         
         <div className="flex-1 max-w-xl px-4 hidden md:block">
