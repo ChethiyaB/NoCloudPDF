@@ -1,4 +1,4 @@
-import { Combine, ListOrdered, Trash2, Edit3, ArrowRight } from 'lucide-react';
+import { Combine, ListOrdered, Trash2, Edit3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface ToolboxViewProps {
@@ -30,9 +30,6 @@ export function ToolboxView({ onSelectAction }: ToolboxViewProps) {
           </div>
           <h3 className="text-xl font-semibold text-on-surface mb-2 z-10">Merge PDFs</h3>
           <p className="text-secondary text-sm mb-6 z-10">Combine multiple PDF files into one document in seconds.</p>
-          <button className="mt-auto px-4 py-2 bg-primary-container text-on-primary-container text-sm rounded-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all z-10 flex items-center gap-1">
-            Get Started <ArrowRight size={16} />
-          </button>
         </div>
 
         {/* Card 2: Reorder Pages */}
@@ -46,9 +43,6 @@ export function ToolboxView({ onSelectAction }: ToolboxViewProps) {
           </div>
           <h3 className="text-xl font-semibold text-on-surface mb-2 z-10">Reorder Pages</h3>
           <p className="text-secondary text-sm mb-6 z-10">Drag and drop to rearrange pages within your PDF exactly how you need them.</p>
-          <button className="mt-auto px-4 py-2 bg-primary-container text-on-primary-container text-sm rounded-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all z-10 flex items-center gap-1">
-            Get Started <ArrowRight size={16} />
-          </button>
         </div>
 
         {/* Card 3: Delete Pages */}
@@ -62,9 +56,6 @@ export function ToolboxView({ onSelectAction }: ToolboxViewProps) {
           </div>
           <h3 className="text-xl font-semibold text-on-surface mb-2 z-10">Delete Pages</h3>
           <p className="text-secondary text-sm mb-6 z-10">Remove unwanted pages from your document to keep it concise and relevant.</p>
-          <button className="mt-auto px-4 py-2 bg-primary-container text-on-primary-container text-sm rounded-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all z-10 flex items-center gap-1">
-            Get Started <ArrowRight size={16} />
-          </button>
         </div>
 
         {/* Card 4: Edit PDF */}
@@ -78,9 +69,6 @@ export function ToolboxView({ onSelectAction }: ToolboxViewProps) {
           </div>
           <h3 className="text-xl font-semibold text-on-surface mb-2 z-10">Edit PDF</h3>
           <p className="text-secondary text-sm mb-6 z-10">Add text, shapes, or annotations directly to your PDF documents.</p>
-          <button className="mt-auto px-4 py-2 bg-primary-container text-on-primary-container text-sm rounded-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all z-10 flex items-center gap-1">
-            Get Started <ArrowRight size={16} />
-          </button>
         </div>
 
       </div>

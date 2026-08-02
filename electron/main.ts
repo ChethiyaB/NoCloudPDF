@@ -70,6 +70,15 @@ ipcMain.handle('dialog:saveFile', async (event, defaultName: string) => {
   return filePath;
 });
 
+ipcMain.handle('dialog:selectDirectory', async () => {
+  if (!win) return null;
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory']
+  });
+  if (canceled) return null;
+  return filePaths[0];
+});
+
 ipcMain.handle('fs:readFile', async (event, filePath: string) => {
   try {
     const buffer = await fs.readFile(filePath);

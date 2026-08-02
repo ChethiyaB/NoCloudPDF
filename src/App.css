@@ -68,3 +68,29 @@ html, body {
   width: 100vw;
   overflow: hidden;
 }
+
+@layer base {
+  .dark {
+    --color-surface: #0f172a;
+    --color-on-surface: #f1f5f9;
+    --color-background: #0f172a;
+    --color-on-background: #f1f5f9;
+    --color-surface-container: #1e293b;
+    --color-surface-container-low: #0f172a;
+    --color-surface-container-lowest: #020617;
+    --color-surface-container-high: #334155;
+    --color-surface-container-highest: #475569;
+    --color-surface-variant: #334155;
+    --color-on-surface-variant: #cbd5e1;
+    --color-inverse-surface: #f8f9ff;
+    --color-inverse-on-surface: #0f172a;
+    --color-secondary: #94a3b8;
+    --color-on-secondary: #0f172a;
+    --color-primary: #e02424;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #991b1b;
+    --color-on-primary-container: #fecaca;
+    --color-primary-hover: #b91c1c;
+    --color-primary-light: #7f1d1d;
+  }
+}
