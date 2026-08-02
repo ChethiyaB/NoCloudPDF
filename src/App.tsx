@@ -34,6 +34,34 @@ function App() {
     localStorage.setItem('nocloudpdf_files', JSON.stringify(myFiles));
   }, [myFiles]);
 
+  // Retroactively calculate missing file sizes from previous versions
+  useEffect(() => {
+    const updateMissingSizes = async () => {
+      if (!window.electronAPI?.getFileSize) return;
+      
+      let hasChanges = false;
+      const updatedFiles = await Promise.all(
+        myFiles.map(async (file) => {
+          if (!file.size || file.size === 0) {
+            const size = await window.electronAPI.getFileSize(file.path);
+            if (size > 0) {
+              hasChanges = true;
+              return { ...file, size };
+            }
+          }
+          return file;
+        })
+      );
+      
+      if (hasChanges) {
+        setMyFiles(updatedFiles);
+      }
+    };
+    
+    updateMissingSizes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('nocloudpdf_theme', theme);
     localStorage.setItem('nocloudpdf_save_path', defaultSavePath);
