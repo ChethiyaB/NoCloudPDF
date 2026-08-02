@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, createRef } from 'react';
 import { ArrowLeft, Save, Undo, Redo, MousePointer2, Settings, Highlighter, PenTool, Type as TypeIcon } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { EditorPage, EditorPageRef } from './EditorPage';
+import { EditorPage, type EditorPageRef } from './EditorPage';
 import { SavePreview } from './SavePreview';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
