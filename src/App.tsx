@@ -6,7 +6,6 @@ import { ReorderDeleteView } from './components/ReorderDeleteView';
 import { ToolboxView } from './components/ToolboxView';
 import { SettingsView } from './components/SettingsView';
 import { FileListView, type FileData } from './components/FileListView';
-import logoUrl from './assets/logo.png';
 import './App.css';
 
 type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit' | 'my-files' | 'recent' | 'settings';
@@ -79,23 +78,33 @@ function App() {
     if (window.electronAPI) {
       const selected = await window.electronAPI.openFiles();
       if (selected && selected.length > 0) {
-        addFilesToWorkspace(selected);
+        await addFilesToWorkspace(selected);
         setCurrentView('my-files');
       }
     }
   };
 
-  const addFilesToWorkspace = (paths: string[]) => {
+  const addFilesToWorkspace = async (paths: string[]) => {
+    const fileInfos = await Promise.all(
+      paths.map(async (path) => {
+        let size = 0;
+        if (window.electronAPI?.getFileSize) {
+          size = await window.electronAPI.getFileSize(path);
+        }
+        return {
+          path,
+          name: path.split('/').pop() || path.split('\\').pop() || 'Unknown',
+          size,
+          lastAccessed: Date.now()
+        };
+      })
+    );
+
     setMyFiles(prev => {
       const newFiles = [...prev];
-      paths.forEach(path => {
-        if (!newFiles.find(f => f.path === path)) {
-          newFiles.push({
-            path,
-            name: path.split('/').pop() || path.split('\\').pop() || 'Unknown',
-            size: 0, // In a real app, we'd fs.stat this to get real size
-            lastAccessed: Date.now()
-          });
+      fileInfos.forEach(info => {
+        if (!newFiles.find(f => f.path === info.path)) {
+          newFiles.push(info);
         }
       });
       return newFiles;
@@ -136,7 +145,8 @@ function App() {
       {/* TopHeader */}
       <header className="bg-surface border-b border-surface-variant h-16 flex items-center px-4 justify-between shrink-0 z-10 sticky top-0">
         <div className="flex items-center gap-6 w-64 cursor-pointer" onClick={() => setCurrentView('landing')}>
-          <img alt="NoCloudPDF Logo" className="h-10 w-auto object-contain" src={logoUrl} />
+          <img alt="NoCloudPDF Logo" className="h-10 w-auto object-contain dark:hidden" src="/src/assets/logo-light.png" />
+          <img alt="NoCloudPDF Logo" className="h-10 w-auto object-contain hidden dark:block" src="/src/assets/logo-dark.png" />
         </div>
         
         <div className="flex-1 max-w-xl px-4 hidden md:block">
@@ -169,10 +179,13 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className="w-64 bg-surface border-r border-surface-variant flex-col shrink-0 overflow-y-auto hidden md:flex">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-primary mb-1">Workspace</h2>
-            <p className="text-sm text-secondary mb-6">Professional Tools</p>
-            
+        {/* Logo and App Name */}
+        <div className="p-6 pb-2">
+          <div className="flex items-center">
+            <img src="/src/assets/logo-light.png" alt="NoCloudPDF Logo" className="h-10 dark:hidden" />
+            <img src="/src/assets/logo-dark.png" alt="NoCloudPDF Logo" className="h-10 hidden dark:block" />
+          </div>
+        </div>    
             <button 
               className="w-full bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2 mb-6 shadow-sm"
               onClick={handleUploadFiles}
@@ -228,9 +241,9 @@ function App() {
             )}
             
             {/* Tool Views */}
-            {currentView === 'merge' && <MergeView key="merge" files={selectedFiles} onBack={() => setCurrentView('landing')} />}
-            {currentView === 'reorder' && <ReorderDeleteView key="reorder" files={selectedFiles} onBack={() => setCurrentView('landing')} />}
-            {currentView === 'delete' && <ReorderDeleteView key="delete" files={selectedFiles} onBack={() => setCurrentView('landing')} />}
+            {currentView === 'merge' && <MergeView key="merge" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
+            {currentView === 'reorder' && <ReorderDeleteView key="reorder" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
+            {currentView === 'delete' && <ReorderDeleteView key="delete" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'edit' && renderPlaceholderView('Edit')}
           </AnimatePresence>
         </main>

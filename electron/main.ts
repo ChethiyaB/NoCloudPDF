@@ -99,6 +99,15 @@ ipcMain.handle('fs:writeFile', async (event, filePath: string, data: Uint8Array)
   }
 });
 
+ipcMain.handle('fs:getFileSize', async (event, filePath: string) => {
+  try {
+    const stats = await fs.stat(filePath);
+    return stats.size;
+  } catch {
+    return 0;
+  }
+});
+
 ipcMain.handle('os:showItemInFolder', (event, fullPath: string) => {
   shell.showItemInFolder(fullPath);
 });

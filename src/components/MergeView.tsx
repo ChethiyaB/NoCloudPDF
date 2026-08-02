@@ -16,6 +16,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 interface MergeViewProps {
   files: string[];
   onBack: () => void;
+  onSave?: (path: string) => void;
 }
 
 interface PdfFileData {
@@ -71,7 +72,7 @@ function SortableItem({ file, onRemove }: { file: PdfFileData, onRemove: (id: st
   );
 }
 
-export function MergeView({ files, onBack }: MergeViewProps) {
+export function MergeView({ files, onBack, onSave }: MergeViewProps) {
   const [fileList, setFileList] = useState<PdfFileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -189,6 +190,7 @@ export function MergeView({ files, onBack }: MergeViewProps) {
         await window.electronAPI.writeFile(savePath, generatedPdfBytes);
         setSavedFilePath(savePath);
         setSaveSuccess(`Successfully merged and saved to ${savePath}`);
+        if (onSave) onSave(savePath);
       } else {
         setSaveError('Save operation canceled.');
       }

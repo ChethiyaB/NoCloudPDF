@@ -2,14 +2,14 @@ import { motion } from 'framer-motion';
 import { Settings, Moon, Sun, FolderOpen } from 'lucide-react';
 
 interface SettingsViewProps {
-  onBack: () => void;
+  onBack?: () => void;
   theme: 'light' | 'dark' | 'system';
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   defaultSavePath: string;
   setDefaultSavePath: (path: string) => void;
 }
 
-export function SettingsView({ theme, setTheme, defaultSavePath, setDefaultSavePath }: SettingsViewProps) {
+export function SettingsView({ onBack, theme, setTheme, defaultSavePath, setDefaultSavePath }: SettingsViewProps) {
   
   const handleSelectDirectory = async () => {
     if (window.electronAPI) {
@@ -27,9 +27,20 @@ export function SettingsView({ theme, setTheme, defaultSavePath, setDefaultSaveP
       exit={{ opacity: 0, y: -10 }}
       className="max-w-4xl mx-auto w-full"
     >
-      <h1 className="text-3xl font-bold text-on-surface mb-2 flex items-center gap-3">
-        <Settings className="text-primary" size={28} /> Settings
-      </h1>
+      <div className="flex items-center gap-4 mb-6">
+        {onBack && (
+          <button 
+            onClick={onBack}
+            className="p-2 text-secondary hover:bg-surface-container rounded-full transition-colors"
+            aria-label="Back to home"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          </button>
+        )}
+        <h1 className="text-3xl font-bold text-on-surface flex items-center gap-3">
+          <Settings className="text-primary" size={28} /> Settings
+        </h1>
+      </div>
       <p className="text-secondary text-lg mb-8">Customize your NoCloudPDF workspace.</p>
       
       <div className="bg-surface-container-lowest border border-surface-variant rounded-xl p-8 flex flex-col gap-8 shadow-sm">

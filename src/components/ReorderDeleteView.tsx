@@ -16,6 +16,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 interface ReorderDeleteViewProps {
   files: string[];
   onBack: () => void;
+  onSave?: (path: string) => void;
 }
 
 interface PageData {
@@ -71,7 +72,7 @@ function SortableItem({ page, index, onRemove }: { page: PageData, index: number
   );
 }
 
-export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
+export function ReorderDeleteView({ files, onBack, onSave }: ReorderDeleteViewProps) {
   const [pages, setPages] = useState<PageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -183,6 +184,7 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
         await window.electronAPI.writeFile(savePath, generatedPdfBytes);
         setSavedFilePath(savePath);
         setSaveSuccess(`Saved successfully to ${savePath}`);
+        if (onSave) onSave(savePath);
       } else {
         setSaveError('Save canceled.');
       }
