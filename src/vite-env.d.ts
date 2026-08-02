@@ -8,6 +8,7 @@ interface Window {
     readFile: (filePath: string) => Promise<ArrayBuffer>;
     writeFile: (filePath: string, data: Uint8Array) => Promise<void>;
     getFileSize: (filePath: string) => Promise<number>;
+    compressPdf: (inputPath: string, outputPath: string, level: string) => Promise<boolean>;
     showItemInFolder: (fullPath: string) => Promise<void>;
     openExternal: (url: string) => Promise<void>;
   };

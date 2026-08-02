@@ -4,11 +4,12 @@ import { Search, Upload, Combine, ListOrdered, Trash2, Edit3, Minimize, Settings
 import { MergeView } from './components/MergeView';
 import { ReorderDeleteView } from './components/ReorderDeleteView';
 import { ToolboxView } from './components/ToolboxView';
+import { CompressView } from './components/CompressView';
 import { SettingsView } from './components/SettingsView';
 import { FileListView, type FileData } from './components/FileListView';
 import './App.css';
 
-type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit' | 'my-files' | 'recent' | 'settings';
+type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit' | 'compress' | 'my-files' | 'recent' | 'settings';
 type ThemeMode = 'light' | 'dark' | 'system';
 
 function App() {
@@ -78,7 +79,7 @@ function App() {
 
   // Sync default save path with electron if needed in future (it can just be passed down)
 
-  const handleActionClick = async (action: 'merge' | 'reorder' | 'delete' | 'edit', files?: string[]) => {
+  const handleActionClick = async (action: 'merge' | 'reorder' | 'delete' | 'edit' | 'compress', files?: string[]) => {
     if (files && files.length > 0) {
       setSelectedFiles(files);
       setCurrentView(action);
@@ -232,8 +233,8 @@ function App() {
               <div className={navItemClass(currentView === 'edit')}>
                 <Edit3 size={18} className="text-center w-5" /> Edit
               </div>
-              <div className={navItemClass(false)}>
-                <Minimize size={18} className="text-center w-5 text-secondary" /> Compress
+              <div className={navItemClass(currentView === 'compress')}>
+                <Minimize size={18} className="text-center w-5" /> Compress
               </div>
             </nav>
           </div>
@@ -270,6 +271,7 @@ function App() {
             {currentView === 'merge' && <MergeView key="merge" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'reorder' && <ReorderDeleteView key="reorder" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'delete' && <ReorderDeleteView key="delete" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
+            {currentView === 'compress' && <CompressView key="compress" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} defaultSavePath={defaultSavePath} />}
             {currentView === 'edit' && renderPlaceholderView('Edit')}
           </AnimatePresence>
         </main>
