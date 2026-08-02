@@ -181,21 +181,21 @@ function App() {
             </button>
 
             <nav className="space-y-1">
-              <a href="#" className={navItemClass(currentView === 'merge')} onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
+              <div className={navItemClass(currentView === 'merge')}>
                 <Combine size={18} className="text-center w-5" /> Merge
-              </a>
-              <a href="#" className={navItemClass(currentView === 'reorder')} onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
+              </div>
+              <div className={navItemClass(currentView === 'reorder')}>
                 <ListOrdered size={18} className="text-center w-5" /> Reorder
-              </a>
-              <a href="#" className={navItemClass(currentView === 'delete')} onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
+              </div>
+              <div className={navItemClass(currentView === 'delete')}>
                 <Trash2 size={18} className="text-center w-5" /> Delete
-              </a>
-              <a href="#" className={navItemClass(currentView === 'edit')} onClick={(e) => { e.preventDefault(); setCurrentView('landing'); }}>
+              </div>
+              <div className={navItemClass(currentView === 'edit')}>
                 <Edit3 size={18} className="text-center w-5" /> Edit
-              </a>
-              <a href="#" className={navItemClass(false)}>
+              </div>
+              <div className={navItemClass(false)}>
                 <Minimize size={18} className="text-center w-5 text-secondary" /> Compress
-              </a>
+              </div>
             </nav>
           </div>
           

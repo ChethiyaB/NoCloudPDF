@@ -72,7 +72,7 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className={`bg-white border border-surface-variant rounded-2xl p-8 mx-auto text-center transition-all duration-300 shadow-xl ${previewUrl ? 'max-w-4xl' : 'max-w-xl'}`}
+      className={`bg-surface-container-lowest border border-surface-variant rounded-2xl p-8 mx-auto text-center transition-all duration-300 shadow-xl ${previewUrl ? 'max-w-4xl' : 'max-w-xl'}`}
     >
       <FileText size={48} className={`mx-auto mb-4 ${successMessage ? 'text-green-500' : 'text-primary'}`} />
       <h2 className="text-2xl font-bold text-on-surface">{successMessage ? 'Saved Successfully!' : 'Ready to Save'}</h2>
@@ -85,7 +85,7 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
           </div>
           <button 
             onClick={handlePreview}
-            className="px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary-light transition-colors flex items-center gap-2 font-medium shadow-sm"
+            className="px-4 py-2 bg-surface border border-primary text-primary rounded-lg hover:bg-primary-light transition-colors flex items-center gap-2 font-medium shadow-sm"
           >
             {previewUrl ? <><X size={16} /> Close Preview</> : <><Eye size={16} /> Preview PDF</>}
           </button>
@@ -128,13 +128,13 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
             </button>
             <button 
               onClick={handleWhatsApp} 
-              className="flex items-center justify-center gap-2 p-3 bg-white border border-surface-variant rounded-lg text-on-surface hover:bg-surface-container transition-colors font-medium shadow-sm"
+              className="flex items-center justify-center gap-2 p-3 bg-surface border border-surface-variant rounded-lg text-on-surface hover:bg-surface-container transition-colors font-medium shadow-sm"
             >
                Share in WhatsApp
             </button>
             <button 
               onClick={handleGmail} 
-              className="flex items-center justify-center gap-2 p-3 bg-white border border-surface-variant rounded-lg text-on-surface hover:bg-surface-container transition-colors font-medium shadow-sm"
+              className="flex items-center justify-center gap-2 p-3 bg-surface border border-surface-variant rounded-lg text-on-surface hover:bg-surface-container transition-colors font-medium shadow-sm"
             >
                Share via Gmail
             </button>
@@ -151,7 +151,7 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
       <div className="flex gap-4">
         <button 
           onClick={onCancel}
-          className="flex-1 p-3 bg-white border border-secondary text-secondary rounded-lg hover:bg-surface-container transition-colors font-medium"
+          className="flex-1 p-3 bg-surface border border-secondary text-secondary rounded-lg hover:bg-surface-container transition-colors font-medium"
         >
           {successMessage ? 'Back to Menu' : 'Back'}
         </button>
