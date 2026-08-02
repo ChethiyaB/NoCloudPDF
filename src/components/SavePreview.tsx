@@ -72,34 +72,20 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      style={{
-        background: 'var(--glass-bg)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: '16px',
-        padding: '2rem',
-        maxWidth: previewUrl ? '900px' : '500px',
-        width: '100%',
-        margin: '2rem auto',
-        textAlign: 'center',
-        transition: 'max-width 0.3s ease'
-      }}
+      className={`bg-white border border-surface-variant rounded-2xl p-8 mx-auto text-center transition-all duration-300 shadow-xl ${previewUrl ? 'max-w-4xl' : 'max-w-xl'}`}
     >
-      <FileText size={48} color={successMessage ? "#34d399" : "var(--accent-color)"} style={{ margin: '0 auto', display: 'block' }} />
-      <h2 style={{ marginTop: '1rem' }}>{successMessage ? 'Saved Successfully!' : 'Ready to Save'}</h2>
+      <FileText size={48} className={`mx-auto mb-4 ${successMessage ? 'text-green-500' : 'text-primary'}`} />
+      <h2 className="text-2xl font-bold text-on-surface">{successMessage ? 'Saved Successfully!' : 'Ready to Save'}</h2>
       
       {!successMessage && (
-        <div style={{ background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: '8px', margin: '1.5rem 0', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-surface-container-low p-4 rounded-lg my-6 text-left flex justify-between items-center border border-surface-variant">
           <div>
-            <p style={{ margin: '0.5rem 0' }}><strong>Format:</strong> PDF Document (.pdf)</p>
-            <p style={{ margin: '0.5rem 0' }}><strong>Estimated Size:</strong> {sizeInMb} MB</p>
+            <p className="my-1 text-on-surface"><strong>Format:</strong> PDF Document (.pdf)</p>
+            <p className="my-1 text-on-surface"><strong>Estimated Size:</strong> {sizeInMb} MB</p>
           </div>
           <button 
             onClick={handlePreview}
-            style={{
-              padding: '0.5rem 1rem', background: 'transparent',
-              border: '1px solid var(--accent-color)', color: 'var(--accent-color)',
-              borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem'
-            }}
+            className="px-4 py-2 bg-white border border-primary text-primary rounded-lg hover:bg-primary-light transition-colors flex items-center gap-2 font-medium shadow-sm"
           >
             {previewUrl ? <><X size={16} /> Close Preview</> : <><Eye size={16} /> Preview PDF</>}
           </button>
@@ -112,54 +98,60 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: '500px' }}
             exit={{ opacity: 0, height: 0 }}
-            style={{ marginBottom: '1.5rem', borderRadius: '8px', overflow: 'hidden' }}
+            className="mb-6 rounded-lg overflow-hidden border border-surface-variant shadow-inner"
           >
             <iframe 
               src={previewUrl} 
-              width="100%" 
-              height="100%" 
-              style={{ border: 'none', background: 'white' }} 
+              className="w-full h-full border-none bg-neutral-100" 
               title="PDF Preview"
             />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {errorMessage && <div style={{ color: '#f87171', marginBottom: '1rem' }}>{errorMessage}</div>}
+      {errorMessage && <div className="text-error mb-4 font-medium">{errorMessage}</div>}
       
       {successMessage && (
-        <div style={{ margin: '1.5rem 0' }}>
-          <p style={{ color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <div className="my-6">
+          <p className="text-green-600 flex items-center justify-center gap-2 mb-6 font-medium bg-green-50 py-3 rounded-lg border border-green-100">
             <CheckCircle size={20} /> {successMessage}
           </p>
 
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>Share Options</p>
+          <p className="text-secondary mb-4 text-sm font-semibold uppercase tracking-wider text-left">Share Options</p>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <button onClick={handleShowInFolder} style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'var(--accent-color)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <button 
+              onClick={handleShowInFolder} 
+              className="sm:col-span-2 flex items-center justify-center gap-2 p-3 bg-primary text-white border border-transparent rounded-lg hover:bg-primary-hover shadow-sm transition-colors font-medium"
+            >
               <FolderOpen size={18} /> Show in Folder
             </button>
-            <button onClick={handleWhatsApp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+            <button 
+              onClick={handleWhatsApp} 
+              className="flex items-center justify-center gap-2 p-3 bg-white border border-surface-variant rounded-lg text-on-surface hover:bg-surface-container transition-colors font-medium shadow-sm"
+            >
                Share in WhatsApp
             </button>
-            <button onClick={handleGmail} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+            <button 
+              onClick={handleGmail} 
+              className="flex items-center justify-center gap-2 p-3 bg-white border border-surface-variant rounded-lg text-on-surface hover:bg-surface-container transition-colors font-medium shadow-sm"
+            >
                Share via Gmail
             </button>
-            <button onClick={handleCopyPath} style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'transparent', border: '1px solid var(--text-secondary)', borderRadius: '8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <button 
+              onClick={handleCopyPath} 
+              className="sm:col-span-2 flex items-center justify-center gap-2 p-3 bg-transparent border border-secondary text-secondary rounded-lg hover:bg-surface-container transition-colors font-medium"
+            >
               <Copy size={18} /> {copied ? 'Copied to clipboard!' : 'Copy File Path'}
             </button>
           </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '1rem' }}>
+      <div className="flex gap-4">
         <button 
           onClick={onCancel}
-          style={{
-            flex: 1, padding: '0.75rem', background: 'transparent',
-            border: '1px solid var(--text-secondary)', color: 'var(--text-primary)',
-            borderRadius: '8px', cursor: 'pointer'
-          }}
+          className="flex-1 p-3 bg-white border border-secondary text-secondary rounded-lg hover:bg-surface-container transition-colors font-medium"
         >
           {successMessage ? 'Back to Menu' : 'Back'}
         </button>
@@ -168,12 +160,7 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
           <button 
             onClick={handleConfirm}
             disabled={isSaving || !pdfBytes}
-            style={{
-              flex: 2, padding: '0.75rem', background: 'var(--accent-color)',
-              border: 'none', color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem',
-              borderRadius: '8px', cursor: (isSaving || !pdfBytes) ? 'not-allowed' : 'pointer',
-              opacity: (isSaving || !pdfBytes) ? 0.7 : 1
-            }}
+            className="flex-[2] p-3 bg-primary text-white border-none flex justify-center items-center gap-2 rounded-lg cursor-pointer hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm font-medium"
           >
             <Save size={20} />
             {isSaving ? 'Saving...' : 'Confirm & Save'}

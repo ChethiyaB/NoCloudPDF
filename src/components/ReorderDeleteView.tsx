@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Settings, File } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { SavePreview } from './SavePreview';
@@ -36,40 +36,37 @@ function SortableItem({ page, index, onRemove }: { page: PageData, index: number
   return (
     <div
       ref={setNodeRef}
-      style={{
-        ...style,
-        background: 'var(--glass-bg)',
-        borderRadius: '8px',
-        padding: '0.5rem',
-        border: '1px solid var(--glass-border)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative',
-        width: '180px',
-        cursor: 'grab',
-        boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.5)' : 'none'
-      }}
+      style={style}
+      className={`relative group bg-white border border-surface-variant rounded-md shadow-sm transition-shadow cursor-move overflow-hidden aspect-[1/1.4] flex flex-col ${isDragging ? 'shadow-2xl ring-2 ring-primary' : 'hover:shadow-md'}`}
       {...attributes}
       {...listeners}
     >
-      <span style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
+      <div className="absolute top-2 left-2 bg-on-surface/70 text-white text-xs font-semibold px-2 py-0.5 rounded backdrop-blur-sm z-10">
         {index + 1}
-      </span>
+      </div>
       
       <button 
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); onRemove(page.id); }} 
-        style={{ position: 'absolute', top: 5, right: 5, padding: '0.25rem', background: '#ef4444', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+        aria-label={`Delete page ${index + 1}`}
+        className="absolute top-2 right-2 bg-primary text-white w-7 h-7 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-hover shadow-sm z-10"
       >
-        <Trash2 size={16} />
+        <Trash2 size={14} />
       </button>
 
-      <img 
-        src={page.thumbnailUrl} 
-        alt={`Page ${index+1}`} 
-        style={{ width: '100%', height: 'auto', borderRadius: '4px', background: 'white', marginTop: '1.5rem', pointerEvents: 'none' }} 
-      />
+      <div className="flex-1 bg-surface-container-lowest w-full h-full p-2">
+        <div className="w-full h-full bg-white border border-surface-variant shadow-sm overflow-hidden flex items-center justify-center text-surface-variant relative">
+           {page.thumbnailUrl ? (
+             <img 
+               src={page.thumbnailUrl} 
+               alt={`Page ${index+1}`} 
+               className="w-full h-full object-contain pointer-events-none"
+             />
+           ) : (
+             <File size={40} className="text-surface-variant" />
+           )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -157,7 +154,6 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
     setError('');
 
     try {
-      // Re-read file to avoid using the buffer that was detached/transferred by pdf.js worker
       const freshBuffer = await window.electronAPI.readFile(targetFile);
       const originalPdf = await PDFDocument.load(freshBuffer);
       const newPdf = await PDFDocument.create();
@@ -197,7 +193,7 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
 
   if (showPreview) {
     return (
-      <div style={{ padding: '2rem' }}>
+      <div className="p-8">
         <SavePreview 
           pdfBytes={generatedPdfBytes}
           savedFilePath={savedFilePath}
@@ -224,56 +220,54 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="view-container"
-      style={{ width: '100%', maxWidth: '1000px', margin: '0 auto', marginTop: '2rem' }}
+      className="max-w-6xl mx-auto w-full flex-1 flex flex-col"
     >
-      <button className="back-button" onClick={onBack}>
-        <ArrowLeft size={20} /> Back to Menu
+      <button 
+        className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-on-surface transition-colors mb-6 self-start" 
+        onClick={onBack}
+      >
+        <ArrowLeft size={16} /> Back to Menu
       </button>
 
-      <h2>Organize Pages</h2>
-      <p>{targetFile.split('/').pop() || targetFile.split('\\').pop()}</p>
-      <p style={{ color: 'var(--text-secondary)' }}>Drag and drop pages to reorder, or click the trash icon to delete.</p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-on-surface mb-2">Organize Pages</h1>
+        <p className="text-lg font-medium text-secondary mb-1">{targetFile.split('/').pop() || targetFile.split('\\').pop()}</p>
+        <p className="text-secondary text-sm">Drag and drop pages to reorder, or click the trash icon to delete.</p>
+      </div>
 
-      {error && <div style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</div>}
+      {error && <div className="text-error mb-4">{error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <Settings size={40} className="spinner" style={{ animation: 'spin 2s linear infinite' }} />
-          <p style={{ marginTop: '1rem' }}>Loading PDF pages...</p>
+        <div className="flex flex-col items-center justify-center p-12">
+          <Settings size={40} className="animate-spin text-secondary mb-4" />
+          <p className="text-secondary">Loading PDF pages...</p>
         </div>
       ) : (
-        <>
-          <div style={{ marginTop: '2rem' }}>
+        <div className="flex-1 flex flex-col">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8 flex-1 content-start">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={pages.map(p => p.id)} strategy={rectSortingStrategy}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
-                  {pages.map((page, index) => (
-                    <SortableItem key={page.id} page={page} index={index} onRemove={removePage} />
-                  ))}
-                </div>
+                {pages.map((page, i) => (
+                  <SortableItem key={page.id} page={page} index={i} onRemove={removePage} />
+                ))}
               </SortableContext>
             </DndContext>
           </div>
-          
-          {pages.length === 0 && <div style={{ textAlign: 'center', padding: '2rem' }}>No pages left.</div>}
 
-          <button 
-            onClick={handlePrepareSave}
-            disabled={processing || pages.length === 0}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-              width: '100%', padding: '1rem', marginTop: '2rem',
-              background: 'var(--accent-color)', color: 'white', border: 'none',
-              borderRadius: '8px', fontSize: '1.1rem', cursor: (processing || pages.length === 0) ? 'not-allowed' : 'pointer',
-              opacity: (processing || pages.length === 0) ? 0.7 : 1,
-              transition: 'background 0.2s'
-            }}
-          >
-            <Save size={20} />
-            {processing ? 'Processing...' : 'Continue to Save'}
-          </button>
-        </>
+          <div className="sticky bottom-0 bg-background pt-4 pb-8 z-20">
+            <button 
+              onClick={handlePrepareSave}
+              disabled={processing || pages.length === 0}
+              className="w-full bg-primary hover:bg-primary-hover text-on-primary font-semibold py-3 px-6 rounded-md shadow-sm transition-colors flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {processing ? (
+                <><Settings className="animate-spin" size={20} /> Processing...</>
+              ) : (
+                <><Save size={20} /> Continue to Save</>
+              )}
+            </button>
+          </div>
+        </div>
       )}
     </motion.div>
   );
