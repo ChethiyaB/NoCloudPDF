@@ -137,13 +137,13 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
             <button onClick={handleShowInFolder} style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'var(--accent-color)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
-              <FolderOpen size={18} /> 1. Show in Folder (To drag and drop)
+              <FolderOpen size={18} /> Show in Folder
             </button>
             <button onClick={handleWhatsApp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
-               2. Open WhatsApp Web
+               Share in WhatsApp
             </button>
             <button onClick={handleGmail} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
-               2. Open Gmail
+               Share via Gmail
             </button>
             <button onClick={handleCopyPath} style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'transparent', border: '1px solid var(--text-secondary)', borderRadius: '8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               <Copy size={18} /> {copied ? 'Copied to clipboard!' : 'Copy File Path'}
