@@ -179,13 +179,10 @@ function App() {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside className="w-64 bg-surface border-r border-surface-variant flex-col shrink-0 overflow-y-auto hidden md:flex">
-        {/* Logo and App Name */}
-        <div className="p-6 pb-2">
-          <div className="flex items-center">
-            <img src="/src/assets/logo-light.png" alt="NoCloudPDF Logo" className="h-10 dark:hidden" />
-            <img src="/src/assets/logo-dark.png" alt="NoCloudPDF Logo" className="h-10 hidden dark:block" />
-          </div>
-        </div>    
+          <div className="p-6">
+            <h2 className="text-xl font-bold text-primary mb-1">Workspace</h2>
+            <p className="text-sm text-secondary mb-6">Professional Tools</p>
+            
             <button 
               className="w-full bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2 mb-6 shadow-sm"
               onClick={handleUploadFiles}
