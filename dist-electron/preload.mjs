@@ -1,1 +1,0 @@
-let e=require("electron");e.contextBridge.exposeInMainWorld(`electronAPI`,{openFiles:()=>e.ipcRenderer.invoke(`dialog:openFiles`),saveFile:t=>e.ipcRenderer.invoke(`dialog:saveFile`,t),readFile:t=>e.ipcRenderer.invoke(`fs:readFile`,t),writeFile:(t,n)=>e.ipcRenderer.invoke(`fs:writeFile`,t,n)});
