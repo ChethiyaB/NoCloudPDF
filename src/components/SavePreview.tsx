@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, FileText, CheckCircle, Eye, X, FolderOpen, Mail, Copy } from 'lucide-react';
+import { Save, FileText, CheckCircle, Eye, X, FolderOpen, Copy } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface SavePreviewProps {
@@ -47,11 +47,15 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
     }
   };
 
-  const handleEmail = async () => {
-    const subject = encodeURIComponent("Check out this PDF");
-    const body = encodeURIComponent("I've saved a PDF. Please find it attached.\n\n(Remember to manually attach the file before sending!)");
+  const handleWhatsApp = async () => {
     if (window.electronAPI) {
-      await window.electronAPI.openExternal(`mailto:?subject=${subject}&body=${body}`);
+      await window.electronAPI.openExternal('https://web.whatsapp.com/');
+    }
+  };
+
+  const handleGmail = async () => {
+    if (window.electronAPI) {
+      await window.electronAPI.openExternal('https://mail.google.com/');
     }
   };
 
@@ -132,11 +136,14 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>Share Options</p>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-            <button onClick={handleShowInFolder} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
-              <FolderOpen size={18} /> Show in Folder
+            <button onClick={handleShowInFolder} style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'var(--accent-color)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+              <FolderOpen size={18} /> 1. Show in Folder (To drag and drop)
             </button>
-            <button onClick={handleEmail} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
-              <Mail size={18} /> Email
+            <button onClick={handleWhatsApp} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+               2. Open WhatsApp Web
+            </button>
+            <button onClick={handleGmail} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255,255,255,0.1)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white', cursor: 'pointer' }}>
+               2. Open Gmail
             </button>
             <button onClick={handleCopyPath} style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.75rem', background: 'transparent', border: '1px solid var(--text-secondary)', borderRadius: '8px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               <Copy size={18} /> {copied ? 'Copied to clipboard!' : 'Copy File Path'}
