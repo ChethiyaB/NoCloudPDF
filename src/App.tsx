@@ -175,7 +175,7 @@ function App() {
       {/* TopHeader */}
       <header className="bg-surface border-b border-surface-variant h-16 flex items-center px-4 justify-between shrink-0 z-10 sticky top-0">
         <div className="flex items-center gap-6 w-64 cursor-pointer" onClick={() => setCurrentView('landing')}>
-          <img alt="NoCloudPDF Logo" className="h-10 w-auto object-contain" src={isDarkMode ? "/src/assets/logo-dark.png" : "/src/assets/logo-light.png"} />
+          <img alt="NoCloudPDF Logo" className="h-12 w-auto object-contain" src={isDarkMode ? "/src/assets/logo-dark.png" : "/src/assets/logo-light.png"} />
         </div>
         
         <div className="flex-1 max-w-xl px-4 hidden md:block">
