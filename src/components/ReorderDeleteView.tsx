@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion, Reorder } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Save, Trash2, Settings } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { SavePreview } from './SavePreview';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
@@ -16,9 +19,59 @@ interface ReorderDeleteViewProps {
 }
 
 interface PageData {
-  id: string; // unique ID for framer-motion key
+  id: string; // unique ID for dnd-kit key
   originalIndex: number;
   thumbnailUrl: string;
+}
+
+function SortableItem({ page, index, onRemove }: { page: PageData, index: number, onRemove: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: page.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        ...style,
+        background: 'var(--glass-bg)',
+        borderRadius: '8px',
+        padding: '0.5rem',
+        border: '1px solid var(--glass-border)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        position: 'relative',
+        width: '180px',
+        cursor: 'grab',
+        boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.5)' : 'none'
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <span style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
+        {index + 1}
+      </span>
+      
+      <button 
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onRemove(page.id); }} 
+        style={{ position: 'absolute', top: 5, right: 5, padding: '0.25rem', background: '#ef4444', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}
+      >
+        <Trash2 size={16} />
+      </button>
+
+      <img 
+        src={page.thumbnailUrl} 
+        alt={`Page ${index+1}`} 
+        style={{ width: '100%', height: 'auto', borderRadius: '4px', background: 'white', marginTop: '1.5rem', pointerEvents: 'none' }} 
+      />
+    </div>
+  );
 }
 
 export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
@@ -29,13 +82,17 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
   
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
 
-  // Preview state
   const [showPreview, setShowPreview] = useState(false);
   const [generatedPdfBytes, setGeneratedPdfBytes] = useState<Uint8Array | null>(null);
   const [saveSuccess, setSaveSuccess] = useState('');
   const [saveError, setSaveError] = useState('');
 
   const targetFile = files[0];
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     const loadPdf = async () => {
@@ -63,7 +120,7 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
           }
           
           pageDataArray.push({
-            id: `page-${i}-${Date.now()}`, // ensure unique
+            id: `page-${i}-${Date.now()}`,
             originalIndex: i - 1,
             thumbnailUrl: canvas.toDataURL(),
           });
@@ -85,9 +142,19 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
     setPages(pages.filter(p => p.id !== id));
   };
 
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setPages((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   const handlePrepareSave = async () => {
     if (!pdfBuffer || !window.electronAPI) return;
-    
     setProcessing(true);
     setError('');
 
@@ -97,7 +164,6 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       
       const indicesToCopy = pages.map(p => p.originalIndex);
       const copiedPages = await newPdf.copyPages(originalPdf, indicesToCopy);
-      
       copiedPages.forEach(page => newPdf.addPage(page));
       
       const pdfBytes = await newPdf.save();
@@ -114,15 +180,11 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
 
   const handleConfirmSave = async () => {
     if (!generatedPdfBytes || !window.electronAPI) return;
-    
     setSaveError('');
     try {
       const savePath = await window.electronAPI.saveFile(`modified-${targetFile.split('/').pop()}`);
       if (savePath) {
-        await window.electronAPI.writeFile(
-          savePath, 
-          (generatedPdfBytes.buffer as ArrayBuffer).slice(generatedPdfBytes.byteOffset, generatedPdfBytes.byteOffset + generatedPdfBytes.byteLength)
-        );
+        await window.electronAPI.writeFile(savePath, generatedPdfBytes);
         setSaveSuccess(`Saved successfully to ${savePath}`);
       } else {
         setSaveError('Save canceled.');
@@ -137,12 +199,7 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       <div style={{ padding: '2rem' }}>
         <SavePreview 
           pdfBytes={generatedPdfBytes}
-          onCancel={() => {
-            setShowPreview(false);
-            setGeneratedPdfBytes(null);
-            setSaveSuccess('');
-            setSaveError('');
-          }}
+          onCancel={() => { setShowPreview(false); setGeneratedPdfBytes(null); setSaveSuccess(''); setSaveError(''); }}
           onConfirm={handleConfirmSave}
           successMessage={saveSuccess}
           errorMessage={saveError}
@@ -177,58 +234,15 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       ) : (
         <>
           <div style={{ marginTop: '2rem' }}>
-            {/* Using a wrapping div for the grid, but Reorder.Group wraps it. Reorder with grid can be tricky, 
-                framer-motion Reorder supports flex/grid if we pass axis="x" or "y", but for 2D grids, 
-                framer-motion recommends Reorder.Group without specific axis and custom CSS. 
-                Wait, for a grid, Reorder needs a custom layout. Let's make it a wrapping flex container.
-             */}
-            <Reorder.Group 
-              axis="x"
-              values={pages} 
-              onReorder={setPages}
-              style={{ 
-                listStyle: 'none', padding: 0, margin: 0, 
-                display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' 
-              }}
-            >
-              {pages.map((page, index) => (
-                <Reorder.Item 
-                  key={page.id} 
-                  value={page}
-                  style={{
-                    background: 'var(--glass-bg)',
-                    borderRadius: '8px',
-                    padding: '0.5rem',
-                    border: '1px solid var(--glass-border)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    position: 'relative',
-                    width: '180px',
-                    cursor: 'grab'
-                  }}
-                  whileDrag={{ scale: 1.05, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1 }}
-                >
-                  <span style={{ position: 'absolute', top: 10, left: 10, background: 'rgba(0,0,0,0.7)', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>
-                    {index + 1}
-                  </span>
-                  
-                  <button 
-                    onClick={() => removePage(page.id)} 
-                    style={{ position: 'absolute', top: 5, right: 5, padding: '0.25rem', background: '#ef4444', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-
-                  <img 
-                    src={page.thumbnailUrl} 
-                    alt={`Page ${index+1}`} 
-                    style={{ width: '100%', height: 'auto', borderRadius: '4px', background: 'white', marginTop: '1.5rem', pointerEvents: 'none' }} 
-                  />
-                  
-                </Reorder.Item>
-              ))}
-            </Reorder.Group>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={pages.map(p => p.id)} strategy={rectSortingStrategy}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
+                  {pages.map((page, index) => (
+                    <SortableItem key={page.id} page={page} index={index} onRemove={removePage} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
           
           {pages.length === 0 && <div style={{ textAlign: 'center', padding: '2rem' }}>No pages left.</div>}

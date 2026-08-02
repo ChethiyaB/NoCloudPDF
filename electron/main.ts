@@ -80,9 +80,9 @@ ipcMain.handle('fs:readFile', async (event, filePath: string) => {
   }
 });
 
-ipcMain.handle('fs:writeFile', async (event, filePath: string, data: ArrayBuffer) => {
+ipcMain.handle('fs:writeFile', async (event, filePath: string, data: Uint8Array) => {
   try {
-    await fs.writeFile(filePath, Buffer.from(data));
+    await fs.writeFile(filePath, data);
     return true;
   } catch (error) {
     console.error("Error writing file:", error);

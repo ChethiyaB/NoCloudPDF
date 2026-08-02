@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { motion, Reorder } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Save, Trash2, Settings } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { SavePreview } from './SavePreview';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-// Configure pdfjs worker for Vite
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
   import.meta.url,
@@ -17,10 +19,62 @@ interface MergeViewProps {
 }
 
 interface PdfFileData {
-  id: string; // for framer-motion key
+  id: string; // unique ID for dnd-kit
   path: string;
   name: string;
   thumbnailUrl: string;
+}
+
+function SortableItem({ file, onRemove }: { file: PdfFileData, onRemove: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: file.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        ...style,
+        background: 'var(--glass-bg)',
+        borderRadius: '12px',
+        padding: '1rem',
+        border: '1px solid var(--glass-border)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1.5rem',
+        cursor: 'grab',
+        position: 'relative',
+        boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.5)' : 'none'
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <img 
+        src={file.thumbnailUrl} 
+        alt={file.name} 
+        style={{ width: '80px', height: '110px', objectFit: 'contain', background: 'white', borderRadius: '4px', pointerEvents: 'none' }} 
+      />
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <h3 style={{ margin: '0 0 0.5rem 0', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+          {file.name}
+        </h3>
+        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          Drag to reorder
+        </p>
+      </div>
+      <button 
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.stopPropagation(); onRemove(file.id); }} 
+        style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', zIndex: 10 }}
+      >
+        <Trash2 size={24} />
+      </button>
+    </div>
+  );
 }
 
 export function MergeView({ files, onBack }: MergeViewProps) {
@@ -29,11 +83,15 @@ export function MergeView({ files, onBack }: MergeViewProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   
-  // Preview state
   const [showPreview, setShowPreview] = useState(false);
   const [generatedPdfBytes, setGeneratedPdfBytes] = useState<Uint8Array | null>(null);
   const [saveSuccess, setSaveSuccess] = useState('');
   const [saveError, setSaveError] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     const loadThumbnails = async () => {
@@ -41,12 +99,10 @@ export function MergeView({ files, onBack }: MergeViewProps) {
         if (!window.electronAPI) throw new Error("Electron API is required.");
         
         const loadedFiles: PdfFileData[] = [];
-        
         for (let i = 0; i < files.length; i++) {
           const filePath = files[i];
           const buffer = await window.electronAPI.readFile(filePath);
           
-          // Load PDF to get first page thumbnail
           const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
           const pdf = await loadingTask.promise;
           const page = await pdf.getPage(1);
@@ -84,12 +140,22 @@ export function MergeView({ files, onBack }: MergeViewProps) {
     setFileList(fileList.filter(f => f.id !== id));
   };
 
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setFileList((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   const handlePrepareMerge = async () => {
     if (fileList.length < 2) {
       setError('Please select at least two PDF files to merge.');
       return;
     }
-
     setIsProcessing(true);
     setError('');
 
@@ -111,7 +177,6 @@ export function MergeView({ files, onBack }: MergeViewProps) {
       const mergedPdfBytes = await mergedPdf.save();
       setGeneratedPdfBytes(mergedPdfBytes);
       setShowPreview(true);
-      
     } catch (e: any) {
       console.error(e);
       setError(e.message || 'An error occurred during merging.');
@@ -122,15 +187,11 @@ export function MergeView({ files, onBack }: MergeViewProps) {
 
   const handleConfirmSave = async () => {
     if (!generatedPdfBytes || !window.electronAPI) return;
-    
     setSaveError('');
     try {
       const savePath = await window.electronAPI.saveFile('merged.pdf');
       if (savePath) {
-        await window.electronAPI.writeFile(
-          savePath, 
-          (generatedPdfBytes.buffer as ArrayBuffer).slice(generatedPdfBytes.byteOffset, generatedPdfBytes.byteOffset + generatedPdfBytes.byteLength)
-        );
+        await window.electronAPI.writeFile(savePath, generatedPdfBytes);
         setSaveSuccess(`Successfully merged and saved to ${savePath}`);
       } else {
         setSaveError('Save operation canceled.');
@@ -145,12 +206,7 @@ export function MergeView({ files, onBack }: MergeViewProps) {
       <div style={{ padding: '2rem' }}>
         <SavePreview 
           pdfBytes={generatedPdfBytes}
-          onCancel={() => {
-            setShowPreview(false);
-            setGeneratedPdfBytes(null);
-            setSaveSuccess('');
-            setSaveError('');
-          }}
+          onCancel={() => { setShowPreview(false); setGeneratedPdfBytes(null); setSaveSuccess(''); setSaveError(''); }}
           onConfirm={handleConfirmSave}
           successMessage={saveSuccess}
           errorMessage={saveError}
@@ -184,51 +240,15 @@ export function MergeView({ files, onBack }: MergeViewProps) {
       ) : (
         <>
           <div style={{ marginTop: '2rem' }}>
-            <Reorder.Group 
-              axis="y" 
-              values={fileList} 
-              onReorder={setFileList}
-              style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}
-            >
-              {fileList.map((file) => (
-                <Reorder.Item 
-                  key={file.id} 
-                  value={file}
-                  style={{
-                    background: 'var(--glass-bg)',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    border: '1px solid var(--glass-border)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1.5rem',
-                    cursor: 'grab',
-                    position: 'relative'
-                  }}
-                  whileDrag={{ scale: 1.02, boxShadow: '0 10px 30px rgba(0,0,0,0.5)', zIndex: 1 }}
-                >
-                  <img 
-                    src={file.thumbnailUrl} 
-                    alt={file.name} 
-                    style={{ width: '80px', height: '110px', objectFit: 'contain', background: 'white', borderRadius: '4px' }} 
-                  />
-                  <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <h3 style={{ margin: '0 0 0.5rem 0', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                      {file.name}
-                    </h3>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                      Drag to reorder
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => removeFile(file.id)} 
-                    style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-                  >
-                    <Trash2 size={24} />
-                  </button>
-                </Reorder.Item>
-              ))}
-            </Reorder.Group>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={fileList.map(f => f.id)} strategy={verticalListSortingStrategy}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {fileList.map((file) => (
+                    <SortableItem key={file.id} file={file} onRemove={removeFile} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
           
           {fileList.length === 0 && <div style={{ textAlign: 'center', padding: '2rem' }}>No files selected.</div>}

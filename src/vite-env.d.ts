@@ -5,6 +5,6 @@ interface Window {
     openFiles: () => Promise<string[]>;
     saveFile: (defaultName: string) => Promise<string | null>;
     readFile: (filePath: string) => Promise<ArrayBuffer>;
-    writeFile: (filePath: string, data: ArrayBuffer) => Promise<boolean>;
+    writeFile: (filePath: string, data: Uint8Array) => Promise<boolean>;
   };
 }
