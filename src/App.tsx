@@ -35,33 +35,36 @@ function App() {
     localStorage.setItem('nocloudpdf_files', JSON.stringify(myFiles));
   }, [myFiles]);
 
-  // Retroactively calculate missing file sizes from previous versions
+  // Synchronize workspace files with the file system (remove deleted files, update sizes)
   useEffect(() => {
-    const updateMissingSizes = async () => {
+    const syncFilesWithSystem = async () => {
       if (!window.electronAPI?.getFileSize) return;
       
       let hasChanges = false;
-      const updatedFiles = await Promise.all(
-        myFiles.map(async (file) => {
-          if (!file.size || file.size === 0) {
-            const size = await window.electronAPI.getFileSize(file.path);
-            if (size > 0) {
-              hasChanges = true;
-              return { ...file, size };
-            }
-          }
-          return file;
-        })
-      );
+      const validFiles = [];
+      
+      for (const file of myFiles) {
+        const size = await window.electronAPI.getFileSize(file.path);
+        if (size === -1) {
+          // File was deleted from the system, remove it from workspace
+          hasChanges = true;
+        } else if (!file.size || file.size === 0 || file.size !== size) {
+          // Size changed or was 0, update it
+          hasChanges = true;
+          validFiles.push({ ...file, size });
+        } else {
+          validFiles.push(file);
+        }
+      }
       
       if (hasChanges) {
-        setMyFiles(updatedFiles);
+        setMyFiles(validFiles);
       }
     };
     
-    updateMissingSizes();
+    syncFilesWithSystem();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentView]);
 
   useEffect(() => {
     localStorage.setItem('nocloudpdf_theme', theme);

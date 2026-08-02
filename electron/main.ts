@@ -106,7 +106,7 @@ ipcMain.handle('fs:getFileSize', async (event, filePath: string) => {
     const stats = await fs.stat(filePath);
     return stats.size;
   } catch {
-    return 0;
+    return -1;
   }
 });
 
