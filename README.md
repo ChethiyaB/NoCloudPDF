@@ -1,32 +1,35 @@
-# React + TypeScript + Vite
+# NoCloudPDF
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Seamless, powerful, and beautiful PDF manipulation directly on your desktop. 
 
-Currently, two official plugins are available:
+NoCloudPDF allows you to merge, reorder, and delete PDF pages seamlessly using a premium, drag-and-drop interface, all while keeping your files strictly on your local machine (no cloud uploads required).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
+- **Merge PDFs**: Select multiple PDFs, reorder them visually, and merge them into a single file.
+- **Organize Pages**: Visually reorder and delete individual pages from a PDF.
+- **Save Previews**: See exactly how large your new PDF will be before committing the save.
+- **Privacy First**: Completely offline.
 
-## React Compiler
+## How to Run Locally
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
+Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-## Expanding the Oxlint configuration
+### Installation
+1. Clone the repository and navigate to the project folder.
+2. Install the dependencies:
+   ```bash
+   npm install
+   ```
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### Running the App
+Start the Electron desktop application in development mode:
+```bash
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### Building for Production
+To package the application into an executable format:
+```bash
+npm run build
+```

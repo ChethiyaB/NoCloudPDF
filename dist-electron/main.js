@@ -1,61 +1,79 @@
-import { BrowserWindow as e, app as t, dialog as n, ipcMain as r } from "electron";
-import i from "node:path";
-import a from "node:fs/promises";
-import { fileURLToPath as o } from "node:url";
+import { BrowserWindow, app, dialog, ipcMain } from "electron";
+import path from "node:path";
+import fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 //#region electron/main.ts
-var s = i.dirname(o(import.meta.url));
-process.env.APP_ROOT = i.join(s, "..");
-var c = process.env.VITE_DEV_SERVER_URL, l = i.join(process.env.APP_ROOT, "dist-electron"), u = i.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = c ? i.join(process.env.APP_ROOT, "public") : u;
-var d;
-function f() {
-	d = new e({
+var __dirname = path.dirname(fileURLToPath(import.meta.url));
+process.env.APP_ROOT = path.join(__dirname, "..");
+var VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
+var MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
+var RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
+var win;
+function createWindow() {
+	win = new BrowserWindow({
 		width: 1200,
 		height: 800,
 		webPreferences: {
-			preload: i.join(s, "preload.mjs"),
-			nodeIntegration: !1,
-			contextIsolation: !0
+			preload: path.join(__dirname, "preload.mjs"),
+			nodeIntegration: false,
+			contextIsolation: true
 		},
 		backgroundColor: "#0f172a"
-	}), c ? d.loadURL(c) : d.loadFile(i.join(u, "index.html"));
+	});
+	if (VITE_DEV_SERVER_URL) win.loadURL(VITE_DEV_SERVER_URL);
+	else win.loadFile(path.join(RENDERER_DIST, "index.html"));
 }
-t.on("window-all-closed", () => {
-	process.platform !== "darwin" && (t.quit(), d = null);
-}), t.on("activate", () => {
-	e.getAllWindows().length === 0 && f();
-}), t.whenReady().then(f), r.handle("dialog:openFiles", async () => {
-	if (!d) return [];
-	let { canceled: e, filePaths: t } = await n.showOpenDialog(d, {
+app.on("window-all-closed", () => {
+	if (process.platform !== "darwin") {
+		app.quit();
+		win = null;
+	}
+});
+app.on("activate", () => {
+	if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+app.whenReady().then(createWindow);
+ipcMain.handle("dialog:openFiles", async () => {
+	if (!win) return [];
+	const { canceled, filePaths } = await dialog.showOpenDialog(win, {
 		properties: ["openFile", "multiSelections"],
 		filters: [{
 			name: "PDFs",
 			extensions: ["pdf"]
 		}]
 	});
-	return e ? [] : t;
-}), r.handle("dialog:saveFile", async (e, t) => {
-	if (!d) return null;
-	let { canceled: r, filePath: i } = await n.showSaveDialog(d, {
-		defaultPath: t,
+	if (canceled) return [];
+	return filePaths;
+});
+ipcMain.handle("dialog:saveFile", async (event, defaultName) => {
+	if (!win) return null;
+	const { canceled, filePath } = await dialog.showSaveDialog(win, {
+		defaultPath: defaultName,
 		filters: [{
 			name: "PDF",
 			extensions: ["pdf"]
 		}]
 	});
-	return r ? null : i;
-}), r.handle("fs:readFile", async (e, t) => {
+	if (canceled) return null;
+	return filePath;
+});
+ipcMain.handle("fs:readFile", async (event, filePath) => {
 	try {
-		return (await a.readFile(t)).buffer;
-	} catch (e) {
-		throw console.error("Error reading file:", e), e;
+		return (await fs.readFile(filePath)).buffer;
+	} catch (error) {
+		console.error("Error reading file:", error);
+		throw error;
 	}
-}), r.handle("fs:writeFile", async (e, t, n) => {
+});
+ipcMain.handle("fs:writeFile", async (event, filePath, data) => {
 	try {
-		return await a.writeFile(t, Buffer.from(n)), !0;
-	} catch (e) {
-		throw console.error("Error writing file:", e), e;
+		await fs.writeFile(filePath, Buffer.from(data));
+		return true;
+	} catch (error) {
+		console.error("Error writing file:", error);
+		throw error;
 	}
 });
 //#endregion
-export { l as MAIN_DIST, u as RENDERER_DIST, c as VITE_DEV_SERVER_URL };
+export { MAIN_DIST, RENDERER_DIST, VITE_DEV_SERVER_URL };
