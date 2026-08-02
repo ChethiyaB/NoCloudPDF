@@ -24,6 +24,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.png'),
     backgroundColor: '#0f172a', // Slate 900
   });
 
