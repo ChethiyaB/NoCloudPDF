@@ -5,6 +5,7 @@ import { MergeView } from './components/MergeView';
 import { ReorderDeleteView } from './components/ReorderDeleteView';
 import { ToolboxView } from './components/ToolboxView';
 import { CompressView } from './components/CompressView';
+import { EditorView } from './components/EditorView';
 import { SettingsView } from './components/SettingsView';
 import { FileListView, type FileData } from './components/FileListView';
 import './App.css';
@@ -275,7 +276,7 @@ function App() {
             {currentView === 'reorder' && <ReorderDeleteView key="reorder" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'delete' && <ReorderDeleteView key="delete" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'compress' && <CompressView key="compress" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} defaultSavePath={defaultSavePath} />}
-            {currentView === 'edit' && renderPlaceholderView('Edit')}
+            {currentView === 'edit' && <EditorView key="edit" targetFile={selectedFiles[0]} onBack={() => setCurrentView('my-files')} onSave={(path) => { addFilesToWorkspace([path]); setCurrentView('my-files'); }} />}
           </AnimatePresence>
         </main>
       </div>

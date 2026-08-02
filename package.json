@@ -15,6 +15,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "fabric": "^5.3.0",
     "framer-motion": "^12.43.0",
     "lucide-react": "^1.28.0",
     "pdf-lib": "^1.17.1",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/fabric": "^5.3.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
