@@ -106,7 +106,7 @@ function App() {
     `flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
       active 
         ? 'text-primary bg-primary-light' 
-        : 'text-neutral-700 hover:bg-surface-container'
+        : 'text-secondary hover:bg-surface-container hover:text-on-surface'
     }`;
     
   const topNavClass = (active: boolean) => 

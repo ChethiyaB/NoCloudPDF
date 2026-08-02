@@ -38,7 +38,7 @@ function SortableItem({ file, onRemove }: { file: PdfFileData, onRemove: (id: st
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group bg-white border border-surface-variant rounded-md shadow-sm transition-shadow cursor-move overflow-hidden flex items-center gap-4 p-3 ${isDragging ? 'shadow-2xl ring-2 ring-primary' : 'hover:shadow-md'}`}
+      className={`relative group bg-surface-container-lowest border border-surface-variant rounded-md shadow-sm transition-shadow cursor-move overflow-hidden flex items-center gap-4 p-3 ${isDragging ? 'shadow-2xl ring-2 ring-primary' : 'hover:shadow-md'}`}
       {...attributes}
       {...listeners}
     >

@@ -37,7 +37,7 @@ function SortableItem({ page, index, onRemove }: { page: PageData, index: number
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group bg-white border border-surface-variant rounded-md shadow-sm transition-shadow cursor-move overflow-hidden aspect-[1/1.4] flex flex-col ${isDragging ? 'shadow-2xl ring-2 ring-primary' : 'hover:shadow-md'}`}
+      className={`relative group bg-surface-container-lowest border border-surface-variant rounded-md shadow-sm transition-shadow cursor-move overflow-hidden aspect-[1/1.4] flex flex-col ${isDragging ? 'shadow-2xl ring-2 ring-primary' : 'hover:shadow-md'}`}
       {...attributes}
       {...listeners}
     >
@@ -55,7 +55,7 @@ function SortableItem({ page, index, onRemove }: { page: PageData, index: number
       </button>
 
       <div className="flex-1 bg-surface-container-lowest w-full h-full p-2">
-        <div className="w-full h-full bg-white border border-surface-variant shadow-sm overflow-hidden flex items-center justify-center text-surface-variant relative">
+        <div className="w-full h-full bg-surface-container-lowest border border-surface-variant shadow-sm overflow-hidden flex items-center justify-center text-surface-variant relative">
            {page.thumbnailUrl ? (
              <img 
                src={page.thumbnailUrl} 
