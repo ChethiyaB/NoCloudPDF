@@ -248,7 +248,7 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
       )}
       
       {/* We apply a generic class here to wrap, but pointer events are managed via fabricCanvas.wrapperEl in useEffect */}
-      <div className="absolute top-0 left-0 z-20 w-full h-full">
+      <div className="absolute top-0 left-0 z-20 w-full h-full" style={{ pointerEvents: activeTool === 'select-text' ? 'none' : 'none' }}>
          <canvas ref={fabricCanvasRef} />
       </div>
     </div>

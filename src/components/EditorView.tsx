@@ -45,13 +45,21 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (e.shiftKey) {
+      if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
         const zoomDelta = e.deltaY < 0 ? 0.05 : -0.05;
         setScale(prev => {
           const newScale = Math.min(Math.max(0.5, prev + zoomDelta), 3.0);
           return Math.round(newScale * 100) / 100;
         });
+      } else if (e.shiftKey) {
+        // Shift+Wheel typically translates to native horizontal scrolling. 
+        // We ensure we don't preventDefault here so the browser handles it, 
+        // or explicitly scroll if the browser doesn't.
+        if (el) {
+          el.scrollLeft += e.deltaY;
+          e.preventDefault();
+        }
       }
     };
     const el = workspaceRef.current;
