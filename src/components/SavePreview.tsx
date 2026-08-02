@@ -74,7 +74,7 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
       exit={{ opacity: 0, scale: 0.95 }}
       className={`bg-surface-container-lowest border border-surface-variant rounded-2xl p-8 mx-auto text-center transition-all duration-300 shadow-xl ${previewUrl ? 'max-w-4xl' : 'max-w-xl'}`}
     >
-      <FileText size={48} className={`mx-auto mb-4 ${successMessage ? 'text-success' : 'text-primary'}`} />
+      <FileText size={48} className={`mx-auto mb-4 ${successMessage ? 'text-green-600 dark:text-green-400' : 'text-primary'}`} />
       <h2 className="text-2xl font-bold text-on-surface">{successMessage ? 'Saved Successfully!' : 'Ready to Save'}</h2>
       
       {!successMessage && (
@@ -113,7 +113,7 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
       
       {successMessage && (
         <div className="my-6">
-          <p className="text-success flex items-center justify-center gap-2 mb-6 font-medium bg-success-bg py-3 rounded-lg border border-success-border">
+          <p className="text-green-600 dark:text-green-400 flex items-center justify-center gap-2 mb-6 font-medium bg-green-50 dark:bg-green-900/30 py-3 rounded-lg border border-green-100 dark:border-green-800/50">
             <CheckCircle size={20} /> {successMessage}
           </p>
 
