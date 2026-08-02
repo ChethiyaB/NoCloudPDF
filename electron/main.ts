@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -105,8 +106,49 @@ ipcMain.handle('fs:getFileSize', async (event, filePath: string) => {
     const stats = await fs.stat(filePath);
     return stats.size;
   } catch {
-    return 0;
+    return -1;
   }
+});
+
+ipcMain.handle('fs:compressPdf', async (event, inputPath: string, outputPath: string, level: string) => {
+  return new Promise((resolve, reject) => {
+    let pdfSettings = '/screen'; // High compression
+    if (level === 'medium') pdfSettings = '/ebook';
+    if (level === 'low') pdfSettings = '/printer';
+
+    const gsCommand = process.platform === 'win32' ? 'gswin64c' : 'gs';
+    
+    const args = [
+      '-sDEVICE=pdfwrite',
+      '-dCompatibilityLevel=1.4',
+      `-dPDFSETTINGS=${pdfSettings}`,
+      '-dNOPAUSE',
+      '-dQUIET',
+      '-dBATCH',
+      `-sOutputFile=${outputPath}`,
+      inputPath
+    ];
+
+    const gsProcess = spawn(gsCommand, args);
+
+    let errorOutput = '';
+
+    gsProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
+    gsProcess.on('close', (code) => {
+      if (code === 0) {
+        resolve(true);
+      } else {
+        reject(new Error(`Ghostscript exited with code ${code}. ${errorOutput}`));
+      }
+    });
+
+    gsProcess.on('error', (err) => {
+      reject(new Error(`Failed to start Ghostscript. Is it installed? Error: ${err.message}`));
+    });
+  });
 });
 
 ipcMain.handle('os:showItemInFolder', (event, fullPath: string) => {

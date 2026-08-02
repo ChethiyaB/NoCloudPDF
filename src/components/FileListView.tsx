@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { FileText, MoreVertical, Combine, ListOrdered, Trash2, Edit3 } from 'lucide-react';
-import { useState } from 'react';
+import { FileText, MoreVertical, Combine, ListOrdered, Trash2, Edit3, Minimize } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export interface FileData {
   path: string;
@@ -12,12 +12,26 @@ export interface FileData {
 interface FileListViewProps {
   files: FileData[];
   searchQuery: string;
-  onSelectAction: (action: 'merge' | 'reorder' | 'delete' | 'edit', filePaths: string[]) => void;
+  onSelectAction: (action: 'merge' | 'reorder' | 'delete' | 'edit' | 'compress', filePaths: string[]) => void;
   title: string;
 }
 
 export function FileListView({ files, searchQuery, onSelectAction, title }: FileListViewProps) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as Element).closest('.action-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    if (menuOpenId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpenId]);
 
   const filteredFiles = files.filter(f => 
     f.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,20 +68,23 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
           <p className="text-secondary">Upload a document to get started.</p>
         </div>
       ) : (
-        <div className="bg-surface-container-lowest border border-surface-variant rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-surface-container-lowest border border-surface-variant rounded-xl shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-surface-container-low border-b border-surface-variant text-secondary text-sm font-semibold uppercase tracking-wider">
-                <th className="p-4 font-semibold">Name</th>
+                <th className="p-4 font-semibold rounded-tl-xl">Name</th>
                 <th className="p-4 font-semibold hidden md:table-cell">Last Accessed</th>
                 <th className="p-4 font-semibold hidden lg:table-cell">Size</th>
-                <th className="p-4 font-semibold text-right">Actions</th>
+                <th className="p-4 font-semibold text-right rounded-tr-xl">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredFiles.map(file => (
-                <tr key={file.path} className="border-b border-surface-variant hover:bg-surface-container-low transition-colors group">
-                  <td className="p-4">
+              {filteredFiles.map((file, index) => {
+                const isLast = index >= filteredFiles.length - 2 && filteredFiles.length > 2;
+                const isLastRow = index === filteredFiles.length - 1;
+                return (
+                <tr key={file.path} className={`border-b border-surface-variant hover:bg-surface-container-low transition-colors group ${isLastRow ? 'border-b-0' : ''}`}>
+                  <td className={`p-4 ${isLastRow ? 'rounded-bl-xl' : ''}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded bg-primary-light flex items-center justify-center text-primary flex-shrink-0">
                         <FileText size={20} />
@@ -83,7 +100,7 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                   <td className="p-4 text-secondary hidden lg:table-cell whitespace-nowrap">
                     {formatSize(file.size)}
                   </td>
-                  <td className="p-4 text-right relative">
+                  <td className={`p-4 text-right relative action-menu-container ${isLastRow ? 'rounded-br-xl' : ''}`}>
                     <button 
                       className="p-2 text-secondary hover:text-on-surface rounded-full hover:bg-surface-container transition-colors focus:outline-none"
                       onClick={() => setMenuOpenId(menuOpenId === file.path ? null : file.path)}
@@ -92,7 +109,7 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                     </button>
 
                     {menuOpenId === file.path && (
-                      <div className="absolute right-8 top-12 w-48 bg-surface-container-lowest border border-surface-variant rounded-md shadow-lg py-1 z-50 text-left">
+                      <div className={`absolute right-8 ${isLast ? 'bottom-12' : 'top-12'} w-48 bg-surface-container-lowest border border-surface-variant rounded-md shadow-lg py-1 z-50 text-left`}>
                         <button 
                           className="w-full px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-2"
                           onClick={() => { setMenuOpenId(null); onSelectAction('reorder', [file.path]); }}
@@ -117,11 +134,18 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                         >
                           <Edit3 size={16} className="text-secondary" /> Edit
                         </button>
+                        <button 
+                          className="w-full px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-2"
+                          onClick={() => { setMenuOpenId(null); onSelectAction('compress', [file.path]); }}
+                        >
+                          <Minimize size={16} className="text-secondary" /> Compress
+                        </button>
                       </div>
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -4,11 +4,12 @@ import { Search, Upload, Combine, ListOrdered, Trash2, Edit3, Minimize, Settings
 import { MergeView } from './components/MergeView';
 import { ReorderDeleteView } from './components/ReorderDeleteView';
 import { ToolboxView } from './components/ToolboxView';
+import { CompressView } from './components/CompressView';
 import { SettingsView } from './components/SettingsView';
 import { FileListView, type FileData } from './components/FileListView';
 import './App.css';
 
-type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit' | 'my-files' | 'recent' | 'settings';
+type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit' | 'compress' | 'my-files' | 'recent' | 'settings';
 type ThemeMode = 'light' | 'dark' | 'system';
 
 function App() {
@@ -34,33 +35,36 @@ function App() {
     localStorage.setItem('nocloudpdf_files', JSON.stringify(myFiles));
   }, [myFiles]);
 
-  // Retroactively calculate missing file sizes from previous versions
+  // Synchronize workspace files with the file system (remove deleted files, update sizes)
   useEffect(() => {
-    const updateMissingSizes = async () => {
+    const syncFilesWithSystem = async () => {
       if (!window.electronAPI?.getFileSize) return;
       
       let hasChanges = false;
-      const updatedFiles = await Promise.all(
-        myFiles.map(async (file) => {
-          if (!file.size || file.size === 0) {
-            const size = await window.electronAPI.getFileSize(file.path);
-            if (size > 0) {
-              hasChanges = true;
-              return { ...file, size };
-            }
-          }
-          return file;
-        })
-      );
+      const validFiles = [];
+      
+      for (const file of myFiles) {
+        const size = await window.electronAPI.getFileSize(file.path);
+        if (size === -1) {
+          // File was deleted from the system, remove it from workspace
+          hasChanges = true;
+        } else if (!file.size || file.size === 0 || file.size !== size) {
+          // Size changed or was 0, update it
+          hasChanges = true;
+          validFiles.push({ ...file, size });
+        } else {
+          validFiles.push(file);
+        }
+      }
       
       if (hasChanges) {
-        setMyFiles(updatedFiles);
+        setMyFiles(validFiles);
       }
     };
     
-    updateMissingSizes();
+    syncFilesWithSystem();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentView]);
 
   useEffect(() => {
     localStorage.setItem('nocloudpdf_theme', theme);
@@ -78,7 +82,7 @@ function App() {
 
   // Sync default save path with electron if needed in future (it can just be passed down)
 
-  const handleActionClick = async (action: 'merge' | 'reorder' | 'delete' | 'edit', files?: string[]) => {
+  const handleActionClick = async (action: 'merge' | 'reorder' | 'delete' | 'edit' | 'compress', files?: string[]) => {
     if (files && files.length > 0) {
       setSelectedFiles(files);
       setCurrentView(action);
@@ -232,8 +236,8 @@ function App() {
               <div className={navItemClass(currentView === 'edit')}>
                 <Edit3 size={18} className="text-center w-5" /> Edit
               </div>
-              <div className={navItemClass(false)}>
-                <Minimize size={18} className="text-center w-5 text-secondary" /> Compress
+              <div className={navItemClass(currentView === 'compress')}>
+                <Minimize size={18} className="text-center w-5" /> Compress
               </div>
             </nav>
           </div>
@@ -270,6 +274,7 @@ function App() {
             {currentView === 'merge' && <MergeView key="merge" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'reorder' && <ReorderDeleteView key="reorder" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
             {currentView === 'delete' && <ReorderDeleteView key="delete" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} />}
+            {currentView === 'compress' && <CompressView key="compress" files={selectedFiles} onBack={() => setCurrentView('landing')} onSave={(path) => addFilesToWorkspace([path])} defaultSavePath={defaultSavePath} />}
             {currentView === 'edit' && renderPlaceholderView('Edit')}
           </AnimatePresence>
         </main>
