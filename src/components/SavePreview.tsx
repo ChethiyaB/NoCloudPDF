@@ -113,9 +113,10 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
       
       {successMessage && (
         <div className="my-6">
-          <p className="text-green-600 dark:text-green-400 flex items-center justify-center gap-2 mb-6 font-medium bg-green-50 dark:bg-green-900/30 py-3 rounded-lg border border-green-100 dark:border-green-800/50">
-            <CheckCircle size={20} /> {successMessage}
-          </p>
+          <div className="text-green-700 dark:text-green-400 flex items-start gap-3 mb-6 font-medium bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800/50">
+            <CheckCircle size={24} className="flex-shrink-0 mt-0.5" />
+            <div className="text-left break-all">{successMessage}</div>
+          </div>
 
           <p className="text-secondary mb-4 text-sm font-semibold uppercase tracking-wider text-left">Share Options</p>
           
