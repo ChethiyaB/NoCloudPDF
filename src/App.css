@@ -50,6 +50,9 @@
   --color-inverse-surface: #213145;
   --color-surface-container-lowest: #ffffff;
   --color-primary-fixed: #ffdad6;
+  --color-success: #059669;
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #dcfce7;
 
   --font-mono-label: "JetBrains Mono", monospace;
   --font-headline-lg-mobile: "Inter", sans-serif;
@@ -92,5 +95,8 @@ html, body {
     --color-on-primary-container: #fecaca;
     --color-primary-hover: #b91c1c;
     --color-primary-light: #7f1d1d;
+    --color-success: #34d399;
+    --color-success-bg: rgba(6, 78, 59, 0.4);
+    --color-success-border: #065f46;
   }
 }
