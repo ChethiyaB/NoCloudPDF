@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "dist-electron/main.js",
   "scripts": {
+    "electron": "electron .",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
