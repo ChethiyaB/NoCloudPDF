@@ -65,7 +65,9 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
               </tr>
             </thead>
             <tbody>
-              {filteredFiles.map(file => (
+              {filteredFiles.map((file, index) => {
+                const isLast = index >= filteredFiles.length - 2 && filteredFiles.length > 2;
+                return (
                 <tr key={file.path} className="border-b border-surface-variant hover:bg-surface-container-low transition-colors group">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
@@ -92,7 +94,7 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                     </button>
 
                     {menuOpenId === file.path && (
-                      <div className="absolute right-8 top-12 w-48 bg-surface-container-lowest border border-surface-variant rounded-md shadow-lg py-1 z-50 text-left">
+                      <div className={`absolute right-8 ${isLast ? 'bottom-12' : 'top-12'} w-48 bg-surface-container-lowest border border-surface-variant rounded-md shadow-lg py-1 z-50 text-left`}>
                         <button 
                           className="w-full px-4 py-2 text-sm text-on-surface hover:bg-surface-container flex items-center gap-2"
                           onClick={() => { setMenuOpenId(null); onSelectAction('reorder', [file.path]); }}
@@ -121,7 +123,8 @@ export function FileListView({ files, searchQuery, onSelectAction, title }: File
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
