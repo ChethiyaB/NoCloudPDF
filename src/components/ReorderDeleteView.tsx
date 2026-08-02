@@ -123,15 +123,22 @@ export function ReorderDeleteView({ files, onBack, onSave }: ReorderDeleteViewPr
         }
         
         setPages(pageDataArray);
+        setPages(pageDataArray);
       } catch (err: any) {
         console.error(err);
-        setError("Failed to load PDF: " + err.message);
+        const errorMsg = err.message || '';
+        if (errorMsg.includes('ENOENT') || errorMsg.includes('no such file')) {
+          setError("This file could not be found. It may have been moved or deleted from your device.");
+        } else {
+          setError("Failed to load PDF: " + err.message);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     if (targetFile) loadPdf();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetFile]);
 
   const removePage = (id: string) => {
@@ -237,15 +244,26 @@ export function ReorderDeleteView({ files, onBack, onSave }: ReorderDeleteViewPr
         <p className="text-secondary text-sm">Drag and drop pages to reorder, or click the trash icon to delete.</p>
       </div>
 
-      {error && <div className="text-error mb-4">{error}</div>}
-
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12">
           <Settings size={40} className="animate-spin text-secondary mb-4" />
           <p className="text-secondary">Loading PDF pages...</p>
         </div>
+      ) : error && pages.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto mt-12 border border-surface-variant rounded-xl bg-surface-container-lowest shadow-sm">
+          <File size={48} className="text-error mb-4" />
+          <h2 className="text-2xl font-bold text-on-surface mb-2">File Not Found</h2>
+          <p className="text-secondary mb-6">{error}</p>
+          <button 
+            onClick={onBack}
+            className="px-6 py-2 bg-primary text-white font-medium rounded-md hover:bg-primary-hover transition-colors shadow-sm"
+          >
+            Return to Workspace
+          </button>
+        </div>
       ) : (
         <div className="flex-1 flex flex-col">
+          {error && <div className="bg-error/10 text-error px-4 py-3 rounded-md mb-4 font-medium border border-error/20">{error}</div>}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8 flex-1 content-start">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={pages.map(p => p.id)} strategy={rectSortingStrategy}>

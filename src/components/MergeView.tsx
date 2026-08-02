@@ -123,14 +123,20 @@ export function MergeView({ files, onBack, onSave }: MergeViewProps) {
         setFileList(loadedFiles);
       } catch (err: any) {
         console.error(err);
-        setError("Failed to load PDF thumbnails: " + err.message);
+        const errorMsg = err.message || '';
+        if (errorMsg.includes('ENOENT') || errorMsg.includes('no such file')) {
+          setError("One or more files could not be found. They may have been moved or deleted from your device.");
+        } else {
+          setError("Failed to load PDF: " + err.message);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     loadThumbnails();
-  }, [files]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeFile = (id: string) => {
     setFileList(fileList.filter(f => f.id !== id));
@@ -144,6 +150,57 @@ export function MergeView({ files, onBack, onSave }: MergeViewProps) {
         const newIndex = items.findIndex((i) => i.id === over.id);
         return arrayMove(items, oldIndex, newIndex);
       });
+    }
+  };
+
+  const handleAddFiles = async () => {
+    if (!window.electronAPI) return;
+    try {
+      const newFiles = await window.electronAPI.openFiles();
+      if (!newFiles || newFiles.length === 0) return;
+      
+      setIsProcessing(true);
+      const addedFiles: PdfFileData[] = [];
+      
+      for (let i = 0; i < newFiles.length; i++) {
+        const filePath = newFiles[i];
+        if (fileList.some(f => f.path === filePath)) continue;
+        
+        const buffer = await window.electronAPI.readFile(filePath);
+        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        const viewport = page.getViewport({ scale: 0.2 });
+        
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        let thumbnailUrl = '';
+        if (context) {
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          await page.render({ canvasContext: context, viewport: viewport, canvas: canvas as any }).promise;
+          thumbnailUrl = canvas.toDataURL();
+        }
+        
+        addedFiles.push({
+          id: `file-new-${Date.now()}-${i}`,
+          path: filePath,
+          name: filePath.split('/').pop() || filePath.split('\\').pop() || 'Unknown',
+          thumbnailUrl,
+        });
+      }
+      
+      setFileList(prev => [...prev, ...addedFiles]);
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.message || '';
+      if (errorMsg.includes('ENOENT') || errorMsg.includes('no such file')) {
+        setError("One or more files could not be found. They may have been moved or deleted.");
+      } else {
+        setError("Failed to load PDF: " + err.message);
+      }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -242,15 +299,35 @@ export function MergeView({ files, onBack, onSave }: MergeViewProps) {
         <p className="text-secondary text-sm">Drag and drop the documents to reorder them before merging.</p>
       </div>
 
-      {error && <div className="text-error mb-4">{error}</div>}
-
       {loading ? (
         <div className="flex flex-col items-center justify-center p-12">
           <Settings size={40} className="animate-spin text-secondary mb-4" />
           <p className="text-secondary">Loading thumbnails...</p>
         </div>
+      ) : error && fileList.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto">
+          <FileText size={48} className="text-error mb-4" />
+          <h2 className="text-2xl font-bold text-on-surface mb-2">File Not Found</h2>
+          <p className="text-secondary mb-6">{error}</p>
+          <button 
+            onClick={onBack}
+            className="px-6 py-2 bg-primary text-white font-medium rounded-md hover:bg-primary-hover transition-colors"
+          >
+            Return to Workspace
+          </button>
+        </div>
       ) : (
         <div className="flex-1 flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-semibold text-on-surface">Files to Merge ({fileList.length})</h2>
+            <button 
+              onClick={handleAddFiles}
+              disabled={isProcessing}
+              className="text-primary font-medium hover:bg-primary-light px-4 py-2 rounded-md transition-colors text-sm disabled:opacity-50"
+            >
+              + Add More Files
+            </button>
+          </div>
           <div className="flex-1 overflow-y-auto mb-8">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={fileList.map(f => f.id)} strategy={verticalListSortingStrategy}>
