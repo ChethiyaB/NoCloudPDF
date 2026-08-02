@@ -6,12 +6,13 @@ interface EditorPageProps {
   page: pdfjsLib.PDFPageProxy;
   pageIndex: number;
   scale: number;
-  activeTool: 'select' | 'draw' | 'highlight' | 'text';
+  activeTool: 'select' | 'select-text' | 'draw' | 'highlight' | 'text' | 'eraser';
   textColor: string;
   fontFamily: string;
   isBold: boolean;
   isItalic: boolean;
   isUnderline: boolean;
+  rotation: number;
   onAnnotationAdded?: () => void;
 }
 
@@ -31,12 +32,15 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
   isBold,
   isItalic,
   isUnderline,
+  rotation,
   onAnnotationAdded
 }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
+  const [textItems, setTextItems] = useState<any[]>([]);
+  const [viewportState, setViewportState] = useState<any>(null);
   
   const [originalDims, setOriginalDims] = useState({ width: 0, height: 0 });
 
@@ -57,11 +61,18 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
     const renderPage = async () => {
       if (!pdfCanvasRef.current || !fabricCanvasRef.current) return;
       
-      const viewport = page.getViewport({ scale });
+      const viewport = page.getViewport({ scale, rotation: (page.rotate + rotation) % 360 });
+      setViewportState(viewport);
       setOriginalDims({ 
-        width: page.getViewport({ scale: 1 }).width, 
-        height: page.getViewport({ scale: 1 }).height 
+        width: page.getViewport({ scale: 1, rotation: (page.rotate + rotation) % 360 }).width, 
+        height: page.getViewport({ scale: 1, rotation: (page.rotate + rotation) % 360 }).height 
       });
+
+      // Fetch Text Content
+      const textContent = await page.getTextContent();
+      if (!isCancelled) {
+        setTextItems(textContent.items);
+      }
 
       // PDF Canvas
       const pdfCanvas = pdfCanvasRef.current;
@@ -103,7 +114,7 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
         fCanvas.dispose();
       }
     };
-  }, [page, scale]);
+  }, [page, scale, rotation]);
 
   // Tool handling
   useEffect(() => {
@@ -123,13 +134,16 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
     // Remove old listeners
     fabricCanvas.off('mouse:down');
 
-    if (activeTool === 'draw' || activeTool === 'highlight') {
+    if (activeTool === 'draw' || activeTool === 'highlight' || activeTool === 'eraser') {
       fabricCanvas.isDrawingMode = true;
       fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
       
       if (activeTool === 'highlight') {
         fabricCanvas.freeDrawingBrush.color = 'rgba(255, 224, 0, 0.4)';
         fabricCanvas.freeDrawingBrush.width = 16 * scale;
+      } else if (activeTool === 'eraser') {
+        fabricCanvas.freeDrawingBrush.color = '#ffffff';
+        fabricCanvas.freeDrawingBrush.width = 20 * scale; // wide brush for whiteout
       } else {
         fabricCanvas.freeDrawingBrush.color = textColor;
         fabricCanvas.freeDrawingBrush.width = 3 * scale;
@@ -179,8 +193,44 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
 
   return (
     <div ref={containerRef} className="relative shadow-md mx-auto mb-8 bg-white" style={{ width: originalDims.width * scale, height: originalDims.height * scale }}>
-      <canvas ref={pdfCanvasRef} className="absolute top-0 left-0" style={{ width: '100%', height: '100%' }} />
-      <canvas ref={fabricCanvasRef} className="absolute top-0 left-0 z-10" />
+      <canvas ref={pdfCanvasRef} className="absolute top-0 left-0 z-0" style={{ width: '100%', height: '100%' }} />
+      
+      {/* Selectable Text Layer */}
+      {viewportState && (
+        <div 
+          className="absolute top-0 left-0 w-full h-full z-10 overflow-hidden" 
+          style={{ pointerEvents: activeTool === 'select-text' ? 'auto' : 'none' }}
+        >
+          {textItems.map((item, i) => {
+            const [x, y] = viewportState.convertToViewportPoint(item.transform[4], item.transform[5]);
+            // y is the baseline of the text. To get top-left, we subtract the font size.
+            const fontSize = item.transform[3] * scale;
+            const width = item.width * scale;
+            
+            return (
+              <span 
+                key={i} 
+                style={{
+                  position: 'absolute',
+                  left: `${x}px`,
+                  top: `${y - fontSize}px`,
+                  fontSize: `${fontSize}px`,
+                  width: `${width}px`,
+                  height: `${fontSize}px`,
+                  color: 'transparent',
+                  transformOrigin: 'left bottom',
+                  whiteSpace: 'pre',
+                  cursor: 'text'
+                }}
+              >
+                {item.str}
+              </span>
+            );
+          })}
+        </div>
+      )}
+      
+      <canvas ref={fabricCanvasRef} className="absolute top-0 left-0 z-20" style={{ pointerEvents: activeTool === 'select-text' ? 'none' : 'auto' }} />
     </div>
   );
 });

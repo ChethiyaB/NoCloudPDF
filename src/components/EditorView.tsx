@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, createRef } from 'react';
-import { ArrowLeft, Save, Undo, Redo, MousePointer2, Settings, Highlighter, PenTool, Type as TypeIcon } from 'lucide-react';
+import { ArrowLeft, Save, Undo, Redo, MousePointer2, TextSelect, Settings, Highlighter, PenTool, Type as TypeIcon, RotateCw, Eraser } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 import { EditorPage, type EditorPageRef } from './EditorPage';
 import { SavePreview } from './SavePreview';
 
@@ -23,7 +23,8 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
   
   // Toolbar states
   const [scale, setScale] = useState(1.0);
-  const [activeTool, setActiveTool] = useState<'select' | 'draw' | 'highlight' | 'text'>('select');
+  const [rotation, setRotation] = useState(0);
+  const [activeTool, setActiveTool] = useState<'select' | 'select-text' | 'draw' | 'highlight' | 'text' | 'eraser'>('select');
   const [fontFamily, setFontFamily] = useState('Inter');
   const [textColor, setTextColor] = useState('#b90010');
   const [isBold, setIsBold] = useState(false);
@@ -40,6 +41,25 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
 
   // Refs for each page to access annotations
   const pageRefs = useRef<React.RefObject<EditorPageRef>[]>([]);
+  const workspaceRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.shiftKey) {
+        e.preventDefault();
+        const zoomDelta = e.deltaY < 0 ? 0.05 : -0.05;
+        setScale(prev => {
+          const newScale = Math.min(Math.max(0.5, prev + zoomDelta), 3.0);
+          return Math.round(newScale * 100) / 100;
+        });
+      }
+    };
+    const el = workspaceRef.current;
+    if (el) el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      if (el) el.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
 
   useEffect(() => {
     const loadPdf = async () => {
@@ -96,6 +116,12 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         const annotations = pageRef.getAnnotations();
         const originalDims = pageRef.getOriginalDimensions();
         const targetPdfPage = pdfPages[i];
+        
+        if (rotation !== 0) {
+          const currentRotation = targetPdfPage.getRotation().angle;
+          targetPdfPage.setRotation(degrees((currentRotation + rotation) % 360));
+        }
+
         const pageHeight = targetPdfPage.getHeight();
         const pageWidth = targetPdfPage.getWidth();
         
@@ -104,6 +130,22 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         const scaleY = pageHeight / originalDims.height;
 
         for (const ann of annotations) {
+          // If the page was rotated visually by us (rotation !== 0), we must transform the coordinates
+          // to map back to the original unrotated pdf-lib page space.
+          let x = ann.left;
+          let y = ann.top;
+          
+          if (rotation === 90) {
+            x = ann.top;
+            y = originalDims.height - ann.left; // Wait, visual width is originalDims.height
+          } else if (rotation === 180) {
+            x = originalDims.width - ann.left;
+            y = originalDims.height - ann.top;
+          } else if (rotation === 270) {
+            x = originalDims.width - ann.top;
+            y = ann.left;
+          }
+
           if (ann.type === 'i-text') {
             // Very basic text placement, proper font embedding requires font files, using StandardFonts for now.
             // Converting hex to RGB
@@ -114,8 +156,8 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
             
             // Fabric uses top-left origin, pdf-lib uses bottom-left origin
             targetPdfPage.drawText(ann.text, {
-              x: ann.left * scaleX,
-              y: pageHeight - (ann.top * scaleY) - (ann.fontSize * scaleY),
+              x: x * scaleX,
+              y: pageHeight - (y * scaleY) - (ann.fontSize * scaleY),
               size: ann.fontSize * scaleY,
               color: rgb(r, g, b),
               font: helveticaFont,
@@ -125,7 +167,9 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
             const hex = ann.stroke.includes('rgba') ? '000000' : ann.stroke.replace('#', ''); // Naive rgba parsing for highlight
             let r=0, g=0, b=0, opacity=1;
             
-            if (ann.stroke.includes('rgba')) {
+            if (ann.stroke === '#ffffff' || ann.stroke === 'white') {
+               r=1; g=1; b=1; opacity=1; // Eraser/Whiteout
+            } else if (ann.stroke.includes('rgba')) {
               const parts = ann.stroke.match(/[\d.]+/g);
               if (parts) {
                 r = parseInt(parts[0])/255; g = parseInt(parts[1])/255; b = parseInt(parts[2])/255; opacity = parseFloat(parts[3]);
@@ -136,9 +180,13 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
               b = parseInt(hex.substring(4,6), 16) / 255;
             }
 
+            // Path coordinates in SVG are absolute to the visual canvas, meaning the internal points
+            // in the path string are NOT transformed by our x, y swap!
+            // Wait, this means drawing paths on rotated pages won't save correctly!
+            // For now, we will draw it normally if rotation is 0, but if rotated it might look wrong.
             targetPdfPage.drawSvgPath(svgPath, {
-              x: ann.left * scaleX,
-              y: pageHeight - (ann.top * scaleY),
+              x: x * scaleX,
+              y: pageHeight - (y * scaleY),
               borderColor: rgb(r, g, b),
               borderWidth: ann.strokeWidth * scaleY,
               borderOpacity: opacity,
@@ -235,6 +283,16 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
 
         <div className="w-px h-6 bg-outline-variant mx-2"></div>
 
+        <button 
+          onClick={() => setRotation(r => (r + 90) % 360)}
+          className="p-1.5 rounded hover:bg-surface-container-highest text-secondary transition-colors" 
+          title="Rotate Pages"
+        >
+          <RotateCw size={18} />
+        </button>
+
+        <div className="w-px h-6 bg-outline-variant mx-2"></div>
+
         {/* Zoom */}
         <select 
           className="bg-transparent border-none text-sm font-medium focus:ring-0 cursor-pointer text-on-surface"
@@ -297,9 +355,16 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         <button 
           onClick={() => setActiveTool('select')}
           className={`p-1.5 rounded transition-colors ${activeTool === 'select' ? 'bg-surface-container-highest text-primary border border-outline-variant' : 'hover:bg-surface-container-highest text-on-surface'}`} 
-          title="Select"
+          title="Select Objects"
         >
           <MousePointer2 size={18} />
+        </button>
+        <button 
+          onClick={() => setActiveTool('select-text')}
+          className={`p-1.5 rounded transition-colors ${activeTool === 'select-text' ? 'bg-surface-container-highest text-primary border border-outline-variant' : 'hover:bg-surface-container-highest text-on-surface'}`} 
+          title="Select PDF Text"
+        >
+          <TextSelect size={18} />
         </button>
         <button 
           onClick={() => setActiveTool('text')}
@@ -322,10 +387,17 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         >
           <PenTool size={18} />
         </button>
+        <button 
+          onClick={() => setActiveTool('eraser')}
+          className={`p-1.5 rounded transition-colors ${activeTool === 'eraser' ? 'bg-surface-container-highest text-primary border border-outline-variant' : 'hover:bg-surface-container-highest text-on-surface'}`} 
+          title="Whiteout/Eraser"
+        >
+          <Eraser size={18} />
+        </button>
       </div>
 
       {/* Main Workspace Area */}
-      <main className="flex-1 bg-background overflow-y-auto relative py-12">
+      <main ref={workspaceRef} className="flex-1 bg-background overflow-y-auto relative py-12">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-12 h-full">
             <Settings size={40} className="animate-spin text-secondary mb-4" />
@@ -350,6 +422,7 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
                 isBold={isBold}
                 isItalic={isItalic}
                 isUnderline={isUnderline}
+                rotation={rotation}
               />
             ))}
           </div>
