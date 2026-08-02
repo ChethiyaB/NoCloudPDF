@@ -136,40 +136,58 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
         const pageHeight = targetPdfPage.getHeight();
         const pageWidth = targetPdfPage.getWidth();
         
-        // Scale ratio in case the rendered PDF dimensions differ slightly from pdf-lib
+        // We need the UNROTATED dimensions for drawing
+        const unrotatedWidth = (totalRotation === 90 || totalRotation === 270) ? pageHeight : pageWidth;
+        const unrotatedHeight = (totalRotation === 90 || totalRotation === 270) ? pageWidth : pageHeight;
+
+        // scaleX and scaleY map visual canvas pixels to visual PDF points.
         const scaleX = pageWidth / originalDims.width;
         const scaleY = pageHeight / originalDims.height;
 
         for (const ann of annotations) {
-          // If the page was rotated visually by us, we must transform the coordinates
-          // to map back to the original unrotated pdf-lib page space.
-          let x = ann.left;
-          let y = ann.top;
-          
+          // 1. Get the visual coordinates in PDF points
+          const visX = ann.left * scaleX;
+          const visY = ann.top * scaleY;
+          const visW = ann.width * scaleX;
+          const visH = ann.height * scaleY;
+          const visFontSize = (ann.fontSize || 0) * scaleY;
+
+          // 2. Map visual coordinates to UNROTATED pdf-lib coordinates
+          let x_un = visX;
+          let y_un = unrotatedHeight - visY;
+
           if (totalRotation === 90) {
-            x = ann.top;
-            y = originalDims.height - ann.left; 
+            x_un = visY;
+            y_un = visX;
           } else if (totalRotation === 180) {
-            x = originalDims.width - ann.left;
-            y = originalDims.height - ann.top;
+            x_un = unrotatedWidth - visX;
+            y_un = visY;
           } else if (totalRotation === 270) {
-            x = originalDims.width - ann.top;
-            y = ann.left;
+            x_un = unrotatedWidth - visY;
+            y_un = unrotatedHeight - visX;
           }
 
           if (ann.type === 'i-text') {
-            // Very basic text placement, proper font embedding requires font files, using StandardFonts for now.
-            // Converting hex to RGB
             const hex = ann.fill.replace('#', '');
             const r = parseInt(hex.substring(0,2), 16) / 255;
             const g = parseInt(hex.substring(2,4), 16) / 255;
             const b = parseInt(hex.substring(4,6), 16) / 255;
             
-            // Fabric uses top-left origin, pdf-lib uses bottom-left origin
+            // Adjust y_un for font baseline. In unrotated space, text grows upwards.
+            // visual Y is top. baseline is visually lower (visY + fontSize).
+            // So unrotated Y needs adjustment depending on rotation.
+            let text_x = x_un;
+            let text_y = y_un;
+            
+            if (totalRotation === 0) text_y -= visFontSize;
+            if (totalRotation === 90) text_x += visFontSize;
+            if (totalRotation === 180) text_y += visFontSize;
+            if (totalRotation === 270) text_x -= visFontSize;
+
             targetPdfPage.drawText(ann.text, {
-              x: x * scaleX,
-              y: pageHeight - (y * scaleY) - (ann.fontSize * scaleY),
-              size: ann.fontSize * scaleY,
+              x: text_x,
+              y: text_y,
+              size: visFontSize,
               color: rgb(r, g, b),
               font: helveticaFont,
             });
@@ -191,15 +209,17 @@ export function EditorView({ targetFile, onBack, onSave }: EditorViewProps) {
               b = parseInt(hex.substring(4,6), 16) / 255;
             }
 
-            // Path coordinates in SVG are absolute to the visual canvas, meaning the internal points
-            // in the path string are NOT transformed by our x, y swap!
-            // Wait, this means drawing paths on rotated pages won't save correctly!
-            // For now, we will draw it normally if rotation is 0, but if rotated it might look wrong.
+            // For paths, they have an internal coordinate system.
+            // Mapping the internal SVG string is very complex for 90/180/270. 
+            // The simplest approach is to use standard unrotated coordinates for x,y 
+            // and rely on pdf-lib. (Note: For fully accurate rotated paths, one would need 
+            // to transform every command in the svgPath string, but since we handle rotation visually, 
+            // we'll pass the unrotated translation point).
             targetPdfPage.drawSvgPath(svgPath, {
-              x: x * scaleX,
-              y: pageHeight - (y * scaleY),
+              x: x_un,
+              y: y_un,
               borderColor: rgb(r, g, b),
-              borderWidth: ann.strokeWidth * scaleY,
+              borderWidth: (ann.strokeWidth || 0) * scaleY,
               borderOpacity: opacity,
             });
           }

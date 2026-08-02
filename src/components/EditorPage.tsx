@@ -42,7 +42,7 @@ export const EditorPage = forwardRef<EditorPageRef, EditorPageProps>(({
   const [pageRotation, setPageRotation] = useState(0);
   
   const [originalDims, setOriginalDims] = useState({ width: 0, height: 0 });
-  const totalRotation = (page.rotate + globalRotation + pageRotation) % 360;
+  const totalRotation = (((page.rotate || 0) + globalRotation + pageRotation) % 360 + 360) % 360;
 
   useImperativeHandle(ref, () => ({
     getAnnotations: () => {
