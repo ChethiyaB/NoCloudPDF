@@ -51,15 +51,6 @@
   --color-surface-container-lowest: #ffffff;
   --color-primary-fixed: #ffdad6;
 
-  --spacing-sm: 8px;
-  --spacing-xl: 48px;
-  --spacing-lg: 24px;
-  --spacing-base: 4px;
-  --spacing-xs: 4px;
-  --spacing-gutter: 20px;
-  --spacing-md: 16px;
-  --spacing-margin: 32px;
-
   --font-mono-label: "JetBrains Mono", monospace;
   --font-headline-lg-mobile: "Inter", sans-serif;
   --font-headline-lg: "Inter", sans-serif;
