@@ -95,7 +95,7 @@ function App() {
     <div className="app-container">
       <header className="header">
         <h1>NoCloudPDF</h1>
-        <p>Seamless, powerful, and beautiful PDF manipulation.</p>
+        <p>The all-in-one, privacy-first PDF editor. Seamless, powerful, and built for effortless usability.</p>
       </header>
 
       <AnimatePresence mode="wait">
