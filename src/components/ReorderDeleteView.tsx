@@ -79,8 +79,6 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
-  
-  const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
 
   const [showPreview, setShowPreview] = useState(false);
   const [generatedPdfBytes, setGeneratedPdfBytes] = useState<Uint8Array | null>(null);
@@ -99,7 +97,6 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       try {
         if (!window.electronAPI) throw new Error("Electron API is required.");
         const buffer = await window.electronAPI.readFile(targetFile);
-        setPdfBuffer(buffer);
 
         const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
         const pdf = await loadingTask.promise;
@@ -154,12 +151,14 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
   };
 
   const handlePrepareSave = async () => {
-    if (!pdfBuffer || !window.electronAPI) return;
+    if (!window.electronAPI) return;
     setProcessing(true);
     setError('');
 
     try {
-      const originalPdf = await PDFDocument.load(pdfBuffer);
+      // Re-read file to avoid using the buffer that was detached/transferred by pdf.js worker
+      const freshBuffer = await window.electronAPI.readFile(targetFile);
+      const originalPdf = await PDFDocument.load(freshBuffer);
       const newPdf = await PDFDocument.create();
       
       const indicesToCopy = pages.map(p => p.originalIndex);
