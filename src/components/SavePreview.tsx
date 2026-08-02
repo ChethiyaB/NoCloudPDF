@@ -47,10 +47,12 @@ export function SavePreview({ pdfBytes, onCancel, onConfirm, successMessage, err
     }
   };
 
-  const handleEmail = () => {
+  const handleEmail = async () => {
     const subject = encodeURIComponent("Check out this PDF");
     const body = encodeURIComponent("I've saved a PDF. Please find it attached.\n\n(Remember to manually attach the file before sending!)");
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    if (window.electronAPI) {
+      await window.electronAPI.openExternal(`mailto:?subject=${subject}&body=${body}`);
+    }
   };
 
   const handleCopyPath = () => {

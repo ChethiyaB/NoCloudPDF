@@ -93,3 +93,7 @@ ipcMain.handle('fs:writeFile', async (event, filePath: string, data: Uint8Array)
 ipcMain.handle('os:showItemInFolder', (event, fullPath: string) => {
   shell.showItemInFolder(fullPath);
 });
+
+ipcMain.handle('os:openExternal', (event, url: string) => {
+  shell.openExternal(url);
+});
