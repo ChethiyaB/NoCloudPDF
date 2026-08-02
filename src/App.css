@@ -1,101 +1,96 @@
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  padding: 2rem;
-  background: radial-gradient(circle at top left, #1e293b, #0f172a);
+@import "tailwindcss";
+
+@theme {
+  --color-inverse-on-surface: #eaf1ff;
+  --color-on-tertiary-container: #f9faff;
+  --color-on-primary-fixed-variant: #93000a;
+  --color-secondary-fixed: #d8e3fb;
+  --color-secondary-fixed-dim: #bcc7de;
+  --color-inverse-primary: #ffb4ab;
+  --color-surface-tint: #c00011;
+  --color-surface-container: #e5eeff;
+  --color-tertiary-fixed-dim: #8fcdff;
+  --color-surface-dim: #cbdbf5;
+  --color-primary-fixed-dim: #ffb4ab;
+  --color-secondary-container: #d5e0f8;
+  --color-surface-variant: #d3e4fe;
+  --color-on-primary-fixed: #410002;
+  --color-tertiary-fixed: #cbe6ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-primary-container: #e02424;
+  --color-on-secondary: #ffffff;
+  --color-on-tertiary-fixed-variant: #004b71;
+  --color-on-secondary-fixed: #111c2d;
+  --color-on-tertiary: #ffffff;
+  --color-surface: #f8f9ff;
+  --color-error-container: #ffdad6;
+  --color-on-surface-variant: #5d3f3c;
+  --color-on-error: #ffffff;
+  --color-on-tertiary-fixed: #001e30;
+  --color-error: #ba1a1a;
+  --color-surface-container-low: #eff4ff;
+  --color-on-surface: #0b1c30;
+  --color-on-secondary-fixed-variant: #3c475a;
+  --color-outline-variant: #e6bdb8;
+  --color-outline: #916f6b;
+  --color-secondary: #545f73;
+  --color-on-primary: #ffffff;
+  --color-surface-bright: #f8f9ff;
+  --color-on-background: #0b1c30;
+  --color-on-primary-container: #fff9f8;
+  --color-tertiary: #00608f;
+  --color-on-secondary-container: #586377;
+  --color-surface-container-high: #dce9ff;
+  --color-tertiary-container: #007ab4;
+  --color-on-error-container: #93000a;
+  --color-primary: #b90010;
+  --color-primary-hover: #c81e1e;
+  --color-primary-light: #fde8e8;
+  --color-background: #f8f9ff;
+  --color-inverse-surface: #213145;
+  --color-surface-container-lowest: #ffffff;
+  --color-primary-fixed: #ffdad6;
+
+  --font-mono-label: "JetBrains Mono", monospace;
+  --font-headline-lg-mobile: "Inter", sans-serif;
+  --font-headline-lg: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-headline-md: "Inter", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+  --font-label-caps: "Inter", sans-serif;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.header h1 {
-  font-size: 3rem;
-  font-weight: 800;
+/* Base styles required by the provided HTML mockups */
+html, body {
   margin: 0;
-  background: linear-gradient(to right, #60a5fa, #c084fc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
-.header p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin-top: 0.5rem;
-}
-
-.landing-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  max-width: 1000px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.action-card {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-}
-
-.action-card:hover {
-  transform: translateY(-5px);
-  background: rgba(30, 41, 59, 0.9);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-}
-
-.icon-wrapper {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.action-card h2 {
-  font-size: 1.5rem;
-  margin: 0 0 0.5rem 0;
-}
-
-.action-card p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.5rem 1rem;
-  margin-bottom: 2rem;
-  border-radius: 8px;
-  transition: all 0.2s;
-  align-self: flex-start;
-}
-
-.back-button:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.1);
+@layer base {
+  .dark {
+    --color-surface: #0f172a;
+    --color-on-surface: #f1f5f9;
+    --color-background: #0f172a;
+    --color-on-background: #f1f5f9;
+    --color-surface-container: #1e293b;
+    --color-surface-container-low: #0f172a;
+    --color-surface-container-lowest: #020617;
+    --color-surface-container-high: #334155;
+    --color-surface-container-highest: #475569;
+    --color-surface-variant: #334155;
+    --color-on-surface-variant: #cbd5e1;
+    --color-inverse-surface: #f8f9ff;
+    --color-inverse-on-surface: #0f172a;
+    --color-secondary: #94a3b8;
+    --color-on-secondary: #0f172a;
+    --color-primary: #e02424;
+    --color-on-primary: #ffffff;
+    --color-primary-container: #991b1b;
+    --color-on-primary-container: #fecaca;
+    --color-primary-hover: #b91c1c;
+    --color-primary-light: #7f1d1d;
+  }
 }

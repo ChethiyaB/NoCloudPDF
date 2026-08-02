@@ -24,6 +24,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
+    icon: path.join(process.env.VITE_PUBLIC, 'favicon.png'),
     backgroundColor: '#0f172a', // Slate 900
   });
 
@@ -70,6 +71,15 @@ ipcMain.handle('dialog:saveFile', async (event, defaultName: string) => {
   return filePath;
 });
 
+ipcMain.handle('dialog:selectDirectory', async () => {
+  if (!win) return null;
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory']
+  });
+  if (canceled) return null;
+  return filePaths[0];
+});
+
 ipcMain.handle('fs:readFile', async (event, filePath: string) => {
   try {
     const buffer = await fs.readFile(filePath);
@@ -87,6 +97,15 @@ ipcMain.handle('fs:writeFile', async (event, filePath: string, data: Uint8Array)
   } catch (error) {
     console.error("Error writing file:", error);
     throw error;
+  }
+});
+
+ipcMain.handle('fs:getFileSize', async (event, filePath: string) => {
+  try {
+    const stats = await fs.stat(filePath);
+    return stats.size;
+  } catch {
+    return 0;
   }
 });
 

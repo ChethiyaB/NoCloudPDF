@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Save, Trash2, Settings } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Settings, FileText } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { SavePreview } from './SavePreview';
@@ -16,6 +16,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 interface MergeViewProps {
   files: string[];
   onBack: () => void;
+  onSave?: (path: string) => void;
 }
 
 interface PdfFileData {
@@ -37,47 +38,41 @@ function SortableItem({ file, onRemove }: { file: PdfFileData, onRemove: (id: st
   return (
     <div
       ref={setNodeRef}
-      style={{
-        ...style,
-        background: 'var(--glass-bg)',
-        borderRadius: '12px',
-        padding: '1rem',
-        border: '1px solid var(--glass-border)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1.5rem',
-        cursor: 'grab',
-        position: 'relative',
-        boxShadow: isDragging ? '0 10px 30px rgba(0,0,0,0.5)' : 'none'
-      }}
+      style={style}
+      className={`relative group bg-surface-container-lowest border border-surface-variant rounded-md shadow-sm transition-shadow cursor-move overflow-hidden flex items-center gap-4 p-3 ${isDragging ? 'shadow-2xl ring-2 ring-primary' : 'hover:shadow-md'}`}
       {...attributes}
       {...listeners}
     >
-      <img 
-        src={file.thumbnailUrl} 
-        alt={file.name} 
-        style={{ width: '80px', height: '110px', objectFit: 'contain', background: 'white', borderRadius: '4px', pointerEvents: 'none' }} 
-      />
-      <div style={{ flex: 1, overflow: 'hidden' }}>
-        <h3 style={{ margin: '0 0 0.5rem 0', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-          {file.name}
-        </h3>
-        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Drag to reorder
-        </p>
+      <div className="w-16 h-20 bg-surface-container-lowest border border-surface-variant flex-shrink-0 flex items-center justify-center p-1 rounded">
+        {file.thumbnailUrl ? (
+          <img 
+            src={file.thumbnailUrl} 
+            alt={file.name} 
+            className="w-full h-full object-contain pointer-events-none"
+          />
+        ) : (
+          <FileText className="text-secondary" />
+        )}
       </div>
+      
+      <div className="flex-1 min-w-0">
+        <h3 className="text-on-surface font-semibold truncate mb-1">{file.name}</h3>
+        <p className="text-secondary text-sm">Drag to reorder</p>
+      </div>
+
       <button 
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); onRemove(file.id); }} 
-        style={{ padding: '0.5rem', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', zIndex: 10 }}
+        aria-label="Remove file"
+        className="p-2 text-secondary hover:text-primary transition-colors flex-shrink-0 rounded-md hover:bg-surface-container"
       >
-        <Trash2 size={24} />
+        <Trash2 size={20} />
       </button>
     </div>
   );
 }
 
-export function MergeView({ files, onBack }: MergeViewProps) {
+export function MergeView({ files, onBack, onSave }: MergeViewProps) {
   const [fileList, setFileList] = useState<PdfFileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -195,6 +190,7 @@ export function MergeView({ files, onBack }: MergeViewProps) {
         await window.electronAPI.writeFile(savePath, generatedPdfBytes);
         setSavedFilePath(savePath);
         setSaveSuccess(`Successfully merged and saved to ${savePath}`);
+        if (onSave) onSave(savePath);
       } else {
         setSaveError('Save operation canceled.');
       }
@@ -205,7 +201,7 @@ export function MergeView({ files, onBack }: MergeViewProps) {
 
   if (showPreview) {
     return (
-      <div style={{ padding: '2rem' }}>
+      <div className="p-8">
         <SavePreview 
           pdfBytes={generatedPdfBytes}
           savedFilePath={savedFilePath}
@@ -232,55 +228,60 @@ export function MergeView({ files, onBack }: MergeViewProps) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="view-container"
-      style={{ width: '100%', maxWidth: '1000px', margin: '0 auto', marginTop: '2rem' }}
+      className="max-w-6xl mx-auto w-full flex-1 flex flex-col"
     >
-      <button className="back-button" onClick={onBack}>
-        <ArrowLeft size={20} /> Back to Menu
+      <button 
+        className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-on-surface transition-colors mb-6 self-start" 
+        onClick={onBack}
+      >
+        <ArrowLeft size={16} /> Back to Menu
       </button>
 
-      <h2>Merge PDFs</h2>
-      <p>Drag and drop the documents to reorder them before merging.</p>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-on-surface mb-2">Merge PDFs</h1>
+        <p className="text-secondary text-sm">Drag and drop the documents to reorder them before merging.</p>
+      </div>
 
-      {error && <div style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</div>}
+      {error && <div className="text-error mb-4">{error}</div>}
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '3rem' }}>
-          <Settings size={40} className="spinner" style={{ animation: 'spin 2s linear infinite' }} />
-          <p style={{ marginTop: '1rem' }}>Loading thumbnails...</p>
+        <div className="flex flex-col items-center justify-center p-12">
+          <Settings size={40} className="animate-spin text-secondary mb-4" />
+          <p className="text-secondary">Loading thumbnails...</p>
         </div>
       ) : (
-        <>
-          <div style={{ marginTop: '2rem' }}>
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 overflow-y-auto mb-8">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={fileList.map(f => f.id)} strategy={verticalListSortingStrategy}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="flex flex-col gap-4 max-w-3xl">
                   {fileList.map((file) => (
                     <SortableItem key={file.id} file={file} onRemove={removeFile} />
                   ))}
                 </div>
               </SortableContext>
             </DndContext>
+            {fileList.length === 0 && (
+              <div className="text-center p-12 text-secondary">
+                No files selected.
+              </div>
+            )}
           </div>
           
-          {fileList.length === 0 && <div style={{ textAlign: 'center', padding: '2rem' }}>No files selected.</div>}
-
-          <button 
-            onClick={handlePrepareMerge}
-            disabled={isProcessing || fileList.length < 2}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-              width: '100%', padding: '1rem', marginTop: '2rem',
-              background: 'var(--accent-color)', color: 'white', border: 'none',
-              borderRadius: '8px', fontSize: '1.1rem', cursor: (isProcessing || fileList.length < 2) ? 'not-allowed' : 'pointer',
-              opacity: (isProcessing || fileList.length < 2) ? 0.7 : 1,
-              transition: 'background 0.2s'
-            }}
-          >
-            <Save size={20} />
-            {isProcessing ? 'Processing...' : 'Merge and Continue'}
-          </button>
-        </>
+          <div className="sticky bottom-0 bg-background pt-4 pb-8 z-20">
+            <button 
+              onClick={handlePrepareMerge}
+              disabled={isProcessing || fileList.length < 2}
+              className="w-full bg-primary hover:bg-primary-hover text-on-primary font-semibold py-3 px-6 rounded-md shadow-sm transition-colors flex items-center justify-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? (
+                <><Settings className="animate-spin" size={20} /> Processing...</>
+              ) : (
+                <><Save size={20} /> Merge and Continue</>
+              )}
+            </button>
+          </div>
+        </div>
       )}
     </motion.div>
   );
