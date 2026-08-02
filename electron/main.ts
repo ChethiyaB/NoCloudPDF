@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -68,4 +69,24 @@ ipcMain.handle('dialog:saveFile', async (event, defaultName: string) => {
   });
   if (canceled) return null;
   return filePath;
+});
+
+ipcMain.handle('fs:readFile', async (event, filePath: string) => {
+  try {
+    const buffer = await fs.readFile(filePath);
+    return buffer.buffer; // Return ArrayBuffer
+  } catch (error) {
+    console.error("Error reading file:", error);
+    throw error;
+  }
+});
+
+ipcMain.handle('fs:writeFile', async (event, filePath: string, data: ArrayBuffer) => {
+  try {
+    await fs.writeFile(filePath, Buffer.from(data));
+    return true;
+  } catch (error) {
+    console.error("Error writing file:", error);
+    throw error;
+  }
 });

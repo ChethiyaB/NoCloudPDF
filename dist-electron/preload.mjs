@@ -1,7 +1,1 @@
-let electron = require("electron");
-//#region electron/preload.ts
-electron.contextBridge.exposeInMainWorld("electronAPI", {
-	openFiles: () => electron.ipcRenderer.invoke("dialog:openFiles"),
-	saveFile: (defaultName) => electron.ipcRenderer.invoke("dialog:saveFile", defaultName)
-});
-//#endregion
+let e=require("electron");e.contextBridge.exposeInMainWorld(`electronAPI`,{openFiles:()=>e.ipcRenderer.invoke(`dialog:openFiles`),saveFile:t=>e.ipcRenderer.invoke(`dialog:saveFile`,t),readFile:t=>e.ipcRenderer.invoke(`fs:readFile`,t),writeFile:(t,n)=>e.ipcRenderer.invoke(`fs:writeFile`,t,n)});

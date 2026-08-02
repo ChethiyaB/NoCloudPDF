@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Layers, ListOrdered, Trash2, Edit3, ArrowLeft } from 'lucide-react';
+import { MergeView } from './components/MergeView';
+import { ReorderDeleteView } from './components/ReorderDeleteView';
 import './App.css';
 
 type AppView = 'landing' | 'merge' | 'reorder' | 'delete' | 'edit';
@@ -98,10 +100,10 @@ function App() {
 
       <AnimatePresence mode="wait">
         {currentView === 'landing' && renderLanding()}
-        {currentView === 'merge' && renderPlaceholderView('Merge')}
-        {currentView === 'reorder' && renderPlaceholderView('Reorder')}
-        {currentView === 'delete' && renderPlaceholderView('Delete')}
-        {currentView === 'edit' && renderPlaceholderView('Edit')}
+        {currentView === 'merge' && <MergeView files={selectedFiles} onBack={() => setCurrentView('landing')} />}
+        {currentView === 'reorder' && <ReorderDeleteView files={selectedFiles} mode="reorder" onBack={() => setCurrentView('landing')} />}
+        {currentView === 'delete' && <ReorderDeleteView files={selectedFiles} mode="delete" onBack={() => setCurrentView('landing')} />}
+        {currentView === 'edit' && renderPlaceholderView('Edit (Not supported yet)')}
       </AnimatePresence>
     </div>
   );

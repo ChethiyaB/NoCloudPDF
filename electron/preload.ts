@@ -3,6 +3,6 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('electronAPI', {
   openFiles: () => ipcRenderer.invoke('dialog:openFiles'),
   saveFile: (defaultName: string) => ipcRenderer.invoke('dialog:saveFile', defaultName),
-  // Further PDF processing can be passed here if we want node integration,
-  // but we can use pdf-lib in the browser anyway.
+  readFile: (filePath: string) => ipcRenderer.invoke('fs:readFile', filePath),
+  writeFile: (filePath: string, data: ArrayBuffer) => ipcRenderer.invoke('fs:writeFile', filePath, data),
 });
