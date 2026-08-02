@@ -94,15 +94,15 @@ function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <h1>PDF Studio</h1>
+        <h1>NoCloudPDF</h1>
         <p>Seamless, powerful, and beautiful PDF manipulation.</p>
       </header>
 
       <AnimatePresence mode="wait">
         {currentView === 'landing' && renderLanding()}
         {currentView === 'merge' && <MergeView files={selectedFiles} onBack={() => setCurrentView('landing')} />}
-        {currentView === 'reorder' && <ReorderDeleteView files={selectedFiles} mode="reorder" onBack={() => setCurrentView('landing')} />}
-        {currentView === 'delete' && <ReorderDeleteView files={selectedFiles} mode="delete" onBack={() => setCurrentView('landing')} />}
+        {currentView === 'reorder' && <ReorderDeleteView files={selectedFiles} onBack={() => setCurrentView('landing')} />}
+        {currentView === 'delete' && <ReorderDeleteView files={selectedFiles} onBack={() => setCurrentView('landing')} />}
         {currentView === 'edit' && renderPlaceholderView('Edit (Not supported yet)')}
       </AnimatePresence>
     </div>

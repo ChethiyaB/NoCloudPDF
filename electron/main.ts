@@ -24,7 +24,6 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
     },
-    titleBarStyle: 'hidden',
     backgroundColor: '#0f172a', // Slate 900
   });
 
