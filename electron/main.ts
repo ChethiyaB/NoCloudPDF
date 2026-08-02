@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -88,4 +88,8 @@ ipcMain.handle('fs:writeFile', async (event, filePath: string, data: Uint8Array)
     console.error("Error writing file:", error);
     throw error;
   }
+});
+
+ipcMain.handle('os:showItemInFolder', (event, fullPath: string) => {
+  shell.showItemInFolder(fullPath);
 });

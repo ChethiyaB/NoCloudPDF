@@ -84,6 +84,7 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
   const [generatedPdfBytes, setGeneratedPdfBytes] = useState<Uint8Array | null>(null);
   const [saveSuccess, setSaveSuccess] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [savedFilePath, setSavedFilePath] = useState('');
 
   const targetFile = files[0];
 
@@ -184,6 +185,7 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       const savePath = await window.electronAPI.saveFile(`modified-${targetFile.split('/').pop()}`);
       if (savePath) {
         await window.electronAPI.writeFile(savePath, generatedPdfBytes);
+        setSavedFilePath(savePath);
         setSaveSuccess(`Saved successfully to ${savePath}`);
       } else {
         setSaveError('Save canceled.');
@@ -198,7 +200,17 @@ export function ReorderDeleteView({ files, onBack }: ReorderDeleteViewProps) {
       <div style={{ padding: '2rem' }}>
         <SavePreview 
           pdfBytes={generatedPdfBytes}
-          onCancel={() => { setShowPreview(false); setGeneratedPdfBytes(null); setSaveSuccess(''); setSaveError(''); }}
+          savedFilePath={savedFilePath}
+          onCancel={() => { 
+            setShowPreview(false); 
+            setGeneratedPdfBytes(null); 
+            setSaveSuccess(''); 
+            setSaveError(''); 
+            setSavedFilePath('');
+            if (saveSuccess) {
+              onBack();
+            }
+          }}
           onConfirm={handleConfirmSave}
           successMessage={saveSuccess}
           errorMessage={saveError}

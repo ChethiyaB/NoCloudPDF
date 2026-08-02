@@ -87,6 +87,7 @@ export function MergeView({ files, onBack }: MergeViewProps) {
   const [generatedPdfBytes, setGeneratedPdfBytes] = useState<Uint8Array | null>(null);
   const [saveSuccess, setSaveSuccess] = useState('');
   const [saveError, setSaveError] = useState('');
+  const [savedFilePath, setSavedFilePath] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -192,6 +193,7 @@ export function MergeView({ files, onBack }: MergeViewProps) {
       const savePath = await window.electronAPI.saveFile('merged.pdf');
       if (savePath) {
         await window.electronAPI.writeFile(savePath, generatedPdfBytes);
+        setSavedFilePath(savePath);
         setSaveSuccess(`Successfully merged and saved to ${savePath}`);
       } else {
         setSaveError('Save operation canceled.');
@@ -206,7 +208,17 @@ export function MergeView({ files, onBack }: MergeViewProps) {
       <div style={{ padding: '2rem' }}>
         <SavePreview 
           pdfBytes={generatedPdfBytes}
-          onCancel={() => { setShowPreview(false); setGeneratedPdfBytes(null); setSaveSuccess(''); setSaveError(''); }}
+          savedFilePath={savedFilePath}
+          onCancel={() => { 
+            setShowPreview(false); 
+            setGeneratedPdfBytes(null); 
+            setSaveSuccess(''); 
+            setSaveError('');
+            setSavedFilePath('');
+            if (saveSuccess) {
+              onBack();
+            }
+          }}
           onConfirm={handleConfirmSave}
           successMessage={saveSuccess}
           errorMessage={saveError}
